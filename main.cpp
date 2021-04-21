@@ -5,6 +5,9 @@
 
 
 int main(int argc, char* argv[]) {
+    clock_t start, end;
+    start = clock();
+
     if (argc != 4) {
         std::cout << "Usage: graph_cut <input> <output> <canvas_size>" << std::endl;
         std::cout << "Example: graph_cut peas.png peas_output.png 512x512" << std::endl;
@@ -27,9 +30,11 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < 100; ++ i) {
         Placer::entire_matching(canvas, texture);
     }
+    end = clock();
 
     std::cout << "Writing result into " << argv[2] << " ..." << std::endl;
     canvas->write(argv[2]);
+    std::cout<<"Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
 
     return 0;
 }

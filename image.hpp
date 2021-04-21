@@ -9,6 +9,22 @@
 
 #include "graph.hpp"
 
+// #include <pmmintrin.h>
+// /* use sse 3
+//  * ref https://software.intel.com/sites/landingpage/IntrinsicsGuide
+//  * _mm_cvtss_f32
+//  * _mm_load_ps
+//  * _mm_add_ps
+//  * _mm_mul_ps
+//  */
+
+#include <emmintrin.h>
+#include <tmmintrin.h>
+#include <smmintrin.h>
+#include <pmmintrin.h>
+
+#include "/usr/local/opt/libomp/include/omp.h"
+
 
 #pragma pack()
 struct Pixel {
@@ -17,15 +33,36 @@ struct Pixel {
     Pixel(uint8_t r, uint8_t g, uint8_t b): r(r), g(g), b(b) {}
 
     [[nodiscard]] inline uint64_t sqr_sum() const {
-        uint64_t u_r = r, u_g = g, u_b = b;
-        return u_r * u_r + u_g * u_g + u_b * u_b;
+        // uint64_t u_r = r, u_g = g, u_b = b;
+        // return u_r * u_r + u_g * u_g + u_b * u_b;
+
+        uint32_t r_32 = r, g_32 = g, b_32 = b;
+        __m128i vector= _mm_set_epi32(r_32, g_32, b_32, 0);
+        vector = _mm_mullo_epi32(vector, vector);
+        __m128i zero = _mm_setzero_si128 ();
+        __m128i res = _mm_hadd_epi32(vector, zero);
+        res = _mm_hadd_epi32(res, zero);
+        return _mm_cvtsi128_si32(res);
+
     }
 
     [[nodiscard]] int distance(const Pixel &pixel) const {
-        int r_d = static_cast<int> (r) - pixel.r;
-        int g_d = static_cast<int> (g) - pixel.g;
-        int b_d = static_cast<int> (b) - pixel.b;
-        return std::sqrt(r_d * r_d + g_d * g_d + b_d * b_d);
+        // int r_d = static_cast<int> (r) - pixel.r;
+        // int g_d = static_cast<int> (g) - pixel.g;
+        // int b_d = static_cast<int> (b) - pixel.b;
+        // return std::sqrt(r_d * r_d + g_d * g_d + b_d * b_d);
+
+        uint32_t r_32 = r, g_32 = g, b_32 = b;
+        uint32_t pr_32 = pixel.r, pg_32 = pixel.g, pb_32 = pixel.b;
+        __m128i vector1 = _mm_set_epi32(r_32, g_32, b_32, 0);
+        __m128i vector2 = _mm_set_epi32(pr_32, pg_32, pb_32, 0);
+        __m128i res = _mm_sub_epi32(vector1, vector2);//sub
+        res = _mm_mullo_epi32(res, res);//square
+        __m128i zero = _mm_setzero_si128 ();
+        res = _mm_hadd_epi32(res, zero);
+        res = _mm_hadd_epi32(res, zero);//sum
+        res = _mm_sqrt_ss(res);
+        return _mm_cvtsi128_si32(res);
     }
 
     [[nodiscard]] int sqr_distance(const Pixel &pixel) const {
