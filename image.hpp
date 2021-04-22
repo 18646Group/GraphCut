@@ -24,7 +24,7 @@
 #include <smmintrin.h>
 #include <pmmintrin.h>
 
-#include "/usr/local/opt/libomp/include/omp.h"
+#include "omp.h"
 
 
 #pragma pack()
@@ -62,7 +62,7 @@ struct Pixel {
         __m128i zero = _mm_setzero_si128 ();
         res = _mm_hadd_epi32(res, zero);
         res = _mm_hadd_epi32(res, zero);//sum
-        res = _mm_sqrt_ss(res);
+        res = (__m128i) _mm_sqrt_ss((__m128) res);	// explicit conversion
         return _mm_cvtsi128_si32(res);
     }
 
