@@ -19,3 +19,11 @@ graph_cut <input> <output> <canvas_size>
 ## Details
 
 For more details, please refer to report.pdf.
+
+
+
+## Performance support setup
+
+Need to install OpenMP and FFTW on the system.
+Using FFTW-3.3.9.
+

@@ -1,6 +1,11 @@
 #pragma once
 
 #include "image.hpp"
+#include <fftw3.h>
+
+// macros for complex number
+#define REAL 0
+#define IMAG 1
 
 
 struct ComplexPixel {
