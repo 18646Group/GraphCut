@@ -3,6 +3,7 @@
 #include "cherry.hpp"
 #include "dft.hpp"
 #include "image.hpp"
+#include <fftw3.h>
 
 
 class Placer {
@@ -29,8 +30,10 @@ public:
     // Bigger means more randomness
     static constexpr double possibility_k = 0.3;
 
-    static void entire_matching(const std::shared_ptr<Canvas> &canvas, const std::shared_ptr<Image> &texture, bool random=false, int times=100) {
-        std::shared_ptr<Patch> best_patch;
+    static void entire_matching(const std::shared_ptr<Canvas> &canvas, const std::shared_ptr<Image> &texture, 
+		    		bool random=false, int times=100) {
+        
+	std::shared_ptr<Patch> best_patch;
 
         if (random) {
             auto random_x = Random(0, canvas->w - 1);
@@ -73,28 +76,85 @@ public:
             do_prefix_sum(canvas->w, canvas->h, canvas->data, canvas_sum);
 
             // FFT
-            auto flipped = texture->flip();
-            int dft_w = dft_round(texture->w + canvas->w), dft_h = dft_round(texture->h + canvas->h);
-            ComplexPixel *dft_space1, *dft_space2;
+	    // TODO: rewrite this part with fftw
+	    auto flipped = texture->flip();	// why flip?
+            int dft_w = dft_round(texture->w + canvas->w);	// pad length to 2^n
+            int dft_h = dft_round(texture->h + canvas->h); 	
+	    
+	    /*
+	    ComplexPixel *dft_space1, *dft_space2;
             dft_alloc(flipped, dft_w, dft_h, dft_space1);
             dft_alloc(canvas, dft_w, dft_h, dft_space2);
             dft(dft_w, dft_h, dft_space1);
             dft(dft_w, dft_h, dft_space2);
             dft_multiply(dft_w, dft_h, dft_space1, dft_space2);
             dft(dft_w, dft_h, dft_space1, true);
+	    */
+	    
+
+	    // initialize fft matrix, for each color channel
+	    // size: h * (w * 2), for real and imaginary
+	    fftw_complex flipped_RIn[dft_h][dft_w * 2] = {0}, flipped_ROut[dft_h][dft_w * 2] = {0},
+			 flipped_GIn[dft_h][dft_w * 2] = {0}, flipped_GOut[dft_h][dft_w * 2] = {0},
+			 flipped_BIn[dft_h][dft_w * 2] = {0}, flipped_BOut[dft_h][dft_w * 2] = {0};
+	
+	    fftw_complex canvas_RIn[dft_h][dft_w * 2] = {0}, canvas_ROut[dft_h][dft_w * 2] = {0},
+			 canvas_GIn[dft_h][dft_w * 2] = {0}, canvas_GOut[dft_h][dft_w * 2] = {0},
+			 canvas_BIn[dft_h][dft_w * 2] = {0}, canvas_BOut[dft_h][dft_w * 2] = {0};
+	    // output buffer
+	    fftw_complex outputFFT_R[dft_h][dft_w * 2] = {0}, output_R[dft_h][dft_w * 2] = {0},
+			 outputFFT_G[dft_h][dft_w * 2] = {0}, output_G[dft_h][dft_w * 2] = {0},
+			 outputFFT_B[dft_h][dft_w * 2] = {0}, output_B[dft_h][dft_w * 2] = {0}; 
+
+	    // load in pixel values
+	    DFT::dft_load(flipped, dft_w, dft_h, 
+			    flipped_RIn, flipped_GIn, flipped_BIn);
+
+	    DFT::dft_load(canvas, dft_w, dft_h, 
+			    canvas_RIn, canvas_GIn, canvas_BIn);
+
+	    // perform fft for each channel
+	    DFT::dft(flipped_RIn, flipped_ROut, dft_w, dft_h);
+	    DFT::dft(flipped_GIn, flipped_GOut, dft_w, dft_h);
+	    DFT::dft(flipped_BIn, flipped_BOut, dft_w, dft_h);
+
+	    DFT::dft(canvas_RIn, canvas_ROut, dft_w, dft_h);
+	    DFT::dft(canvas_GIn, canvas_GOut, dft_w, dft_h);
+	    DFT::dft(canvas_BIn, canvas_BOut, dft_w, dft_h);
+
+	    // complex multiplication
+	    DFT::dft_multiply(dft_w, dft_h, flipped_ROut, canvas_ROut, outputFFT_R);
+	    DFT::dft_multiply(dft_w, dft_h, flipped_GOut, canvas_GOut, outputFFT_G);
+	    DFT::dft_multiply(dft_w, dft_h, flipped_BOut, canvas_BOut, outputFFT_B);
+
+	    // ifft
+	    DFT::idft(outputFFT_R, output_R, dft_w, dft_h);
+	    DFT::idft(outputFFT_G, output_G, dft_w, dft_h);
+	    DFT::idft(outputFFT_B, output_B, dft_w, dft_h);
+
+	    
+
 
             // Get results
             uint64_t variance = texture->variance();
-            auto *possibility = static_cast<double*> (std::malloc(canvas->h * canvas->w * sizeof(double)));
-            for (int y = 0, index = 0; y < canvas->h; ++ y) {
+            uint64_t ssd = 0;
+	    auto *possibility = static_cast<double*> (std::malloc(canvas->h * canvas->w * sizeof(double)));
+            
+	    for (int y = 0, index = 0; y < canvas->h; ++ y) {
                 for (int x = 0; x < canvas->w; ++ x, ++ index) {
                     int overlapped_w = std::min(texture->w, canvas->w - x);
                     int overlapped_h = std::min(texture->h, canvas->h - y);
-                    uint64_t ssd = 0;
+                    
+		    ssd = 0;
                     ssd += texture_sum[(overlapped_h - 1) * texture->w + overlapped_w - 1];
                     ssd += query(canvas_sum, x, y, overlapped_w, overlapped_h, canvas->w, canvas->h);
-                    ssd -= std::floor(2.0 * dft_space1[(texture->h + y - 1) * dft_w + texture->w + x - 1].real_sum());
-                    ssd /= overlapped_w * overlapped_h;
+                    
+		    // dft output used here
+		    ssd -= (uint64_t) std::floor(2.0 * (output_R[texture->h + y - 1][texture->w + x - 1][REAL] 
+					    		+ output_G[texture->h + y - 1][texture->w + x - 1][REAL] 
+					    		+ output_B[texture->h + y - 1][texture->w + x - 1][REAL]) );
+                    
+		    ssd /= overlapped_w * overlapped_h;
                     possibility[index] = std::exp(-1.0 * ssd / (possibility_k * variance));
                 }
             }
@@ -119,8 +179,9 @@ public:
             std::free(possibility);
             std::free(texture_sum);
             std::free(canvas_sum);
-            dft_free(dft_space1);
-            dft_free(dft_space2);
+	    
+            //dft_free(dft_space1);
+            //dft_free(dft_space2);
         }
         canvas->apply(best_patch);
     }

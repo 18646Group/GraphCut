@@ -168,3 +168,72 @@ void dft_free(ComplexPixel* dft_space) {
     assert(dft_space);
     std::free(dft_space);
 }
+
+
+
+
+// rewrite with fftw library
+namespace DFT{
+	// load in pixel
+	void dft_load(const std::shared_ptr<Image> &image, int dft_w, int dft_h, 
+			fftw_complex* &matR, fftw_complex* &matG, fftw_complex* &matB){
+		// matR/matG/matB has been initialized to zero before function
+		// matR/matG/matB: (dft_w * dft_h) * 2, row major	
+
+		for(int i = 0, index = 0; i < image -> h; ++i){
+			for(int j = 0; j < image -> w; ++j, ++index){
+				matR[i][j][REAL] = (double)(image -> data[index].r);
+				matG[i][j][REAL] = (double)(image -> data[index].g);
+				matB[i][j][REAL] = (double)(image -> data[index].b);
+			}
+		}
+	}
+
+
+	void dft(fftw_complex *in, fftw_complex *out, const int dft_w, const int dft_h){
+		// initialize 2d fft
+		fftw_plan p;
+		p = fftw_plan_dft_2d(dft_h, dft_w, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+		fftw_execute(p);
+		// clean up
+		fftw_destroy_plan(p);
+		fftw_cleanup();
+	}
+
+	void idft(fftw_complex *in, fftw_complex *out, const int dft_w, const int dft_h){
+		// initialize 2d fft
+		fftw_plan p;
+		p = fftw_plan_dft_2d(dft_h, dft_w, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
+		fftw_execute(p);
+		// clean up
+		fftw_destroy_plan(p);
+		fftw_cleanup();
+	}
+
+
+	void dft_multiply(const int dft_w, const int dft_h, 
+				fftw_complex *a, fftw_complex *b, fftw_complex *outFFT){
+		// multiply complex dft result
+		// TODO: apply omp here
+		for(int i = 0; i < dft_h; ++i){
+			for(int j = 0; j < dft_w; ++j){
+				// i for row, j for col
+				outFFT[i][j][REAL] = a[i][j][REAL]*b[i][j][REAL] - a[i][j][IMAG]*b[i][j][IMAG];
+				outFFT[i][j][IMAG] = a[i][j][REAL]*b[i][j][IMAG] - a[i][j][IMAG]*b[i][j][REAL];
+			}
+		
+		}
+	}
+
+
+} // end namespace FFT
+
+
+
+
+
+
+
+
+
+
