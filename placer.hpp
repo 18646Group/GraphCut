@@ -3,19 +3,30 @@
 #include "cherry.hpp"
 #include "dft.hpp"
 #include "image.hpp"
+#include "/usr/local/opt/libomp/include/omp.h"
 
 
 class Placer {
 public:
     static void init(const std::shared_ptr<Canvas> &canvas, const std::shared_ptr<Image> &texture) {
-        auto random_y = Random(texture->h / 3, texture->h * 2 / 3);
-        auto random_x = Random(texture->w / 3, texture->w * 2 / 3);
-        for (int y = 0; y < canvas->h; y += random_y()) {
-            for (int x = 0; x < canvas->w; x += random_x()) {
+        auto random_y = 50;
+        auto random_x = 50;
+
+        for (int y = 0; y < canvas->h; y += random_y) {
+            for (int x = 0; x < canvas->w; x += random_x) {
                 auto patch = std::make_shared<Patch>(texture, x, y);
                 canvas->apply(patch);
             }
         }
+        // auto random_y = Random(texture->h / 3, texture->h * 2 / 3);
+        // auto random_x = Random(texture->w / 3, texture->w * 2 / 3);
+        // for (int y = 0; y < canvas->h; y += random_y()) {
+        //     for (int x = 0; x < canvas->w; x += random_x()) {
+        //         auto patch = std::make_shared<Patch>(texture, x, y);
+        //         canvas->apply(patch);
+        //     }
+        // }
+        
     }
 
     static void random(const std::shared_ptr<Canvas> &canvas, const std::shared_ptr<Image> &texture) {
@@ -30,6 +41,7 @@ public:
 
     static void entire_matching(const std::shared_ptr<Canvas> &canvas, const std::shared_ptr<Image> &texture, bool random=false, int times=100) {
         std::shared_ptr<Patch> best_patch;
+        // clock_t start, end;
 
         if (random) {
             auto random_x = Random(0, canvas->w - 1);
@@ -47,6 +59,7 @@ public:
         } else {
             // FFT-based acceleration
             // Prefix sum
+            //start = clock();
             assert(canvas->none_empty());
             auto *texture_sum = static_cast<uint64_t*> (std::malloc(texture->w * texture->h * sizeof(uint64_t)));
             auto *canvas_sum = static_cast<uint64_t*> (std::malloc(canvas->w * canvas->h * sizeof(uint64_t)));
@@ -59,6 +72,7 @@ public:
                 return result;
             };
             auto do_prefix_sum = [](int w, int h, Pixel *pixels, uint64_t *sum) {
+                
                 for (int y = 0, index = 0; y < h; ++ y) {
                     for (int x = 0; x < w; ++ x, ++ index) {
                         auto up = y > 0 ? sum[index - w] : 0;
@@ -70,21 +84,39 @@ public:
             };
             do_prefix_sum(texture->w, texture->h, texture->data, texture_sum);
             do_prefix_sum(canvas->w, canvas->h, canvas->data, canvas_sum);
+            //end = clock();
+            //std::cout<<"Run time1: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
 
             // FFT
             auto flipped = texture->flip();
+            //start = clock();
+            //std::cout<<"Run time2: "<<(double)(start - end) / CLOCKS_PER_SEC<<"S"<<std::endl;
+
             int dft_w = dft_round(texture->w + canvas->w), dft_h = dft_round(texture->h + canvas->h);
             ComplexPixel *dft_space1, *dft_space2;
             dft_alloc(flipped, dft_w, dft_h, dft_space1);
             dft_alloc(canvas, dft_w, dft_h, dft_space2);
+            //end = clock();
+            //std::cout<<"Run time3: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
+
             dft(dft_w, dft_h, dft_space1);
+            //start = clock();
+            //std::cout<<"Run time4: "<<(double)(start - end) / CLOCKS_PER_SEC<<"S"<<std::endl;
             dft(dft_w, dft_h, dft_space2);
+           // end = clock();
+           // std::cout<<"Run time5: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
+            
             dft_multiply(dft_w, dft_h, dft_space1, dft_space2);
             dft(dft_w, dft_h, dft_space1, true);
+            //start = clock();
+            //std::cout<<"Run time6: "<<(double)(start - end) / CLOCKS_PER_SEC<<"S"<<std::endl;
+            
+            
 
             // Get results
             uint64_t variance = texture->variance();
             auto *possibility = static_cast<double*> (std::malloc(canvas->h * canvas->w * sizeof(double)));
+            
             for (int y = 0, index = 0; y < canvas->h; ++ y) {
                 for (int x = 0; x < canvas->w; ++ x, ++ index) {
                     int overlapped_w = std::min(texture->w, canvas->w - x);
@@ -98,10 +130,14 @@ public:
                 }
             }
             double possibility_sum = 0;
+            // end = clock();
+            // std::cout<<"Run time3: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
+          
             for (int i = 0; i < canvas->h * canvas->w; ++ i) {
                 possibility_sum += possibility[i];
             }
             double position = Random<double>(0, 1)(), up = 0;
+  
             for (int y = 0, index = 0; y < canvas->h and not best_patch; ++ y) {
                 for (int x = 0; x < canvas->w; ++ x, ++ index) {
                     possibility[index] /= possibility_sum;
@@ -112,6 +148,8 @@ public:
                     up += possibility[index];
                 }
             }
+            // start = clock();
+            // std::cout<<"Run time4: "<<(double)(start - end) / CLOCKS_PER_SEC<<"S"<<std::endl;
             assert(best_patch);
 
             // Free resources

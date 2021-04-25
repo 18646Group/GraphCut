@@ -1,7 +1,7 @@
 #pragma once
 
 #include "image.hpp"
-
+// #include "/usr/local/opt/libomp/include/omp.h"
 
 struct ComplexPixel {
     std::complex<double> r, g, b;
@@ -142,6 +142,7 @@ void dft(int dft_w, int dft_h, ComplexPixel* dft_space, bool inverse=false) {
     // Inverse
     if (inverse) {
         double inv = 1.0 / (dft_w * dft_h);
+        #pragma omp parallel for
         for (int i = 0; i < dft_w * dft_h; ++ i) {
             dft_space[i] = dft_space[i] * inv;
         }

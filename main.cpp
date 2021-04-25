@@ -24,17 +24,20 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Begin to apply patches on canvas:" << std::endl;
     Placer::init(canvas, texture);
+    end = clock();
+    std::cout<<"Apply time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
 
-    // Refine
+    start = clock();
+    // // Refine
     std::cout << "Begin to refine:" << std::endl;
-    for (int i = 0; i < 100; ++ i) {
+    for (int i = 0; i < 10; ++ i) {
         Placer::entire_matching(canvas, texture);
     }
     end = clock();
 
     std::cout << "Writing result into " << argv[2] << " ..." << std::endl;
     canvas->write(argv[2]);
-    std::cout<<"Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
+    std::cout<<"Refine time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
 
     return 0;
 }

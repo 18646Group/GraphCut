@@ -24,54 +24,54 @@ struct Pixel {
     Pixel(uint8_t r, uint8_t g, uint8_t b): r(r), g(g), b(b) {}
 
     [[nodiscard]] inline uint64_t sqr_sum() const {
-        uint64_t u_r = r, u_g = g, u_b = b;
-        return u_r * u_r + u_g * u_g + u_b * u_b;
-        // __m128 vector= _mm_set_ps(r, g, b, 0.0);
-        // __m128 r1 = _mm_mul_ps(vector, vector);
-        // __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
-        // __m128 sums   = _mm_add_ps(r1, shuf);
-        // shuf          = _mm_movehl_ps(shuf, sums);
-        // sums          = _mm_add_ss(sums, shuf);
-        // float result =  _mm_cvtss_f32(sums);
-        // return (int)result;
+        // uint64_t u_r = r, u_g = g, u_b = b;
+        // return u_r * u_r + u_g * u_g + u_b * u_b;
+        __m128 vector= _mm_set_ps(r, g, b, 0.0);
+        __m128 r1 = _mm_mul_ps(vector, vector);
+        __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
+        __m128 sums   = _mm_add_ps(r1, shuf);
+        shuf          = _mm_movehl_ps(shuf, sums);
+        sums          = _mm_add_ss(sums, shuf);
+        float result =  _mm_cvtss_f32(sums);
+        return (int)result;
 
     }
 
     [[nodiscard]] int distance(const Pixel &pixel) const {
-        int r_d = static_cast<int> (r) - pixel.r;
-        int g_d = static_cast<int> (g) - pixel.g;
-        int b_d = static_cast<int> (b) - pixel.b;
-        return std::sqrt(r_d * r_d + g_d * g_d + b_d * b_d);
+        // int r_d = static_cast<int> (r) - pixel.r;
+        // int g_d = static_cast<int> (g) - pixel.g;
+        // int b_d = static_cast<int> (b) - pixel.b;
+        // return std::sqrt(r_d * r_d + g_d * g_d + b_d * b_d);
 
-        // __m128 vector1= _mm_set_ps(r, g, b, 0.0);
-        // __m128 vector2= _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
-        // __m128 sub= _mm_sub_ps(vector1, vector2);
-        // __m128 r1 = _mm_mul_ps(sub,sub);
-        // __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
-        // __m128 sums   = _mm_add_ps(r1, shuf);
-        // shuf          = _mm_movehl_ps(shuf, sums);
-        // sums          = _mm_add_ss(sums, shuf);
-        // sums          = _mm_sqrt_ss(sums);
-        // float result =  _mm_cvtss_f32(sums);
-        // return (int)result;
+        __m128 vector1= _mm_set_ps(r, g, b, 0.0);
+        __m128 vector2= _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
+        __m128 sub= _mm_sub_ps(vector1, vector2);
+        __m128 r1 = _mm_mul_ps(sub,sub);
+        __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
+        __m128 sums   = _mm_add_ps(r1, shuf);
+        shuf          = _mm_movehl_ps(shuf, sums);
+        sums          = _mm_add_ss(sums, shuf);
+        sums          = _mm_sqrt_ss(sums);
+        float result =  _mm_cvtss_f32(sums);
+        return (int)result;
     }
 
     [[nodiscard]] int sqr_distance(const Pixel &pixel) const {
-        int r_d = static_cast<int> (r) - pixel.r;
-        int g_d = static_cast<int> (g) - pixel.g;
-        int b_d = static_cast<int> (b) - pixel.b;
-        return r_d * r_d + g_d * g_d + b_d * b_d;
+        // int r_d = static_cast<int> (r) - pixel.r;
+        // int g_d = static_cast<int> (g) - pixel.g;
+        // int b_d = static_cast<int> (b) - pixel.b;
+        // return r_d * r_d + g_d * g_d + b_d * b_d;
 
-        // __m128 vector1= _mm_set_ps(r, g, b, 0.0);
-        // __m128 vector2= _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
-        // __m128 sub= _mm_sub_ps(vector1, vector2);
-        // __m128 r1 = _mm_mul_ps(sub,sub);
-        // __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
-        // __m128 sums   = _mm_add_ps(r1, shuf);
-        // shuf          = _mm_movehl_ps(shuf, sums);
-        // sums          = _mm_add_ss(sums, shuf);
-        // float result =  _mm_cvtss_f32(sums);
-        // return (int)result;
+        __m128 vector1= _mm_set_ps(r, g, b, 0.0);
+        __m128 vector2= _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
+        __m128 sub= _mm_sub_ps(vector1, vector2);
+        __m128 r1 = _mm_mul_ps(sub,sub);
+        __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
+        __m128 sums   = _mm_add_ps(r1, shuf);
+        shuf          = _mm_movehl_ps(shuf, sums);
+        sums          = _mm_add_ss(sums, shuf);
+        float result =  _mm_cvtss_f32(sums);
+        return (int)result;
     }
 };
 
