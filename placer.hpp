@@ -94,6 +94,8 @@ public:
 
 	    // initialize fft matrix, for each color channel
 	    // size: h * (w * 2), for real and imaginary
+	    /*
+	    printf("dft start \n");
 	    fftw_complex flipped_RIn[dft_h][dft_w * 2] = {0}, flipped_ROut[dft_h][dft_w * 2] = {0},
 			 flipped_GIn[dft_h][dft_w * 2] = {0}, flipped_GOut[dft_h][dft_w * 2] = {0},
 			 flipped_BIn[dft_h][dft_w * 2] = {0}, flipped_BOut[dft_h][dft_w * 2] = {0};
@@ -105,8 +107,51 @@ public:
 	    fftw_complex outputFFT_R[dft_h][dft_w * 2] = {0}, output_R[dft_h][dft_w * 2] = {0},
 			 outputFFT_G[dft_h][dft_w * 2] = {0}, output_G[dft_h][dft_w * 2] = {0},
 			 outputFFT_B[dft_h][dft_w * 2] = {0}, output_B[dft_h][dft_w * 2] = {0}; 
+	    */
+
+	    /*
+	    printf("dft start \n");
+	    fftw_complex flipped_RIn[dft_h * dft_w * 2] = {0}, flipped_ROut[dft_h * dft_w * 2] = {0},
+			 flipped_GIn[dft_h * dft_w * 2] = {0}, flipped_GOut[dft_h * dft_w * 2] = {0},
+			 flipped_BIn[dft_h * dft_w * 2] = {0}, flipped_BOut[dft_h * dft_w * 2] = {0};
+	    
+	    printf("check1 \n");
+	    fftw_complex canvas_RIn[dft_h * dft_w * 2] = {0}, canvas_ROut[dft_h * dft_w * 2] = {0},
+			 canvas_GIn[dft_h * dft_w * 2] = {0}, canvas_GOut[dft_h * dft_w * 2] = {0},
+			 canvas_BIn[dft_h * dft_w * 2] = {0}, canvas_BOut[dft_h * dft_w * 2] = {0};
+	    // output buffer
+	    printf("check2 \n");
+	     fftw_complex outputFFT_R[dft_h * dft_w * 2] = {0}, output_R[dft_h * dft_w * 2] = {0},
+			  outputFFT_G[dft_h * dft_w * 2] = {0}, output_G[dft_h * dft_w * 2] = {0},
+			  outputFFT_B[dft_h * dft_w * 2] = {0}, output_B[dft_h * dft_w * 2] = {0};
+	    */
+
+
+	    //TODO: allocate with malloc
+	    fftw_complex* flipped_RIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+		    	  flipped_ROut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  flipped_GIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  flipped_GOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  flipped_BIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  flipped_BOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
+	
+	    fftw_complex* canvas_RIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+		    	  canvas_ROut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  canvas_GIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  canvas_GOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  canvas_BIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  canvas_BOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
+
+	    fftw_complex* outputFFT_R = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  output_R = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  outputFFT_G = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  output_G = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  outputFFT_B = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  output_B = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
+
 
 	    // load in pixel values
+	    printf("dft load\n");
 	    DFT::dft_load(flipped, dft_w, dft_h, 
 			    flipped_RIn, flipped_GIn, flipped_BIn);
 
@@ -114,6 +159,7 @@ public:
 			    canvas_RIn, canvas_GIn, canvas_BIn);
 
 	    // perform fft for each channel
+	    printf("perform dft for each channel\n");
 	    DFT::dft(flipped_RIn, flipped_ROut, dft_w, dft_h);
 	    DFT::dft(flipped_GIn, flipped_GOut, dft_w, dft_h);
 	    DFT::dft(flipped_BIn, flipped_BOut, dft_w, dft_h);
@@ -132,7 +178,7 @@ public:
 	    DFT::idft(outputFFT_G, output_G, dft_w, dft_h);
 	    DFT::idft(outputFFT_B, output_B, dft_w, dft_h);
 
-	    
+	    printf("dft finished\n");
 
 
             // Get results
@@ -150,10 +196,18 @@ public:
                     ssd += query(canvas_sum, x, y, overlapped_w, overlapped_h, canvas->w, canvas->h);
                     
 		    // dft output used here
+		    /*
 		    ssd -= (uint64_t) std::floor(2.0 * (output_R[texture->h + y - 1][texture->w + x - 1][REAL] 
 					    		+ output_G[texture->h + y - 1][texture->w + x - 1][REAL] 
 					    		+ output_B[texture->h + y - 1][texture->w + x - 1][REAL]) );
-                    
+                    */
+		    
+		    
+		    ssd -= (uint64_t) std::floor(2.0 * (output_R[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL] 
+					    		+ output_G[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL]
+							+ output_B[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL]) );
+		    
+
 		    ssd /= overlapped_w * overlapped_h;
                     possibility[index] = std::exp(-1.0 * ssd / (possibility_k * variance));
                 }
@@ -182,6 +236,19 @@ public:
 	    
             //dft_free(dft_space1);
             //dft_free(dft_space2);
+	    
+	    
+	    fftw_free(flipped_RIn); fftw_free(flipped_ROut);
+	    fftw_free(flipped_GIn); fftw_free(flipped_GOut);
+	    fftw_free(flipped_BIn); fftw_free(flipped_BOut);
+
+	    fftw_free(canvas_RIn); fftw_free(canvas_ROut);
+	    fftw_free(canvas_GIn); fftw_free(canvas_GOut);
+	    fftw_free(canvas_BIn); fftw_free(canvas_BOut);
+
+	    fftw_free(outputFFT_R); fftw_free(output_R);
+	    fftw_free(outputFFT_G); fftw_free(output_G);
+	    fftw_free(outputFFT_B); fftw_free(output_B);
         }
         canvas->apply(best_patch);
     }

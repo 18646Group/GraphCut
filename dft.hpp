@@ -2,6 +2,7 @@
 
 #include "image.hpp"
 #include <fftw3.h>
+#include <cstdlib>	// for debug
 
 // macros for complex number
 #define REAL 0
@@ -176,15 +177,26 @@ void dft_free(ComplexPixel* dft_space) {
 namespace DFT{
 	// load in pixel
 	void dft_load(const std::shared_ptr<Image> &image, int dft_w, int dft_h, 
-			fftw_complex* &matR, fftw_complex* &matG, fftw_complex* &matB){
+			fftw_complex *matR, fftw_complex *matG, fftw_complex *matB){
 		// matR/matG/matB has been initialized to zero before function
 		// matR/matG/matB: (dft_w * dft_h) * 2, row major	
-
+		
+		
+		printf("dft_w: %d, image->h: %d, dft_w*dft_h: %d, h*w %d\n",
+			dft_w, image->h, dft_w*dft_h, (image->h)*(image->w));	
+		
 		for(int i = 0, index = 0; i < image -> h; ++i){
 			for(int j = 0; j < image -> w; ++j, ++index){
+				
+				matR[i * dft_w + j][REAL] = (double)(image -> data[index].r);
+				matG[i * dft_w + j][REAL] = (double)(image -> data[index].g);
+				matB[i * dft_w + j][REAL] = (double)(image -> data[index].b);
+				
+				/*
 				matR[i][j][REAL] = (double)(image -> data[index].r);
 				matG[i][j][REAL] = (double)(image -> data[index].g);
 				matB[i][j][REAL] = (double)(image -> data[index].b);
+				*/
 			}
 		}
 	}
@@ -215,11 +227,23 @@ namespace DFT{
 				fftw_complex *a, fftw_complex *b, fftw_complex *outFFT){
 		// multiply complex dft result
 		// TODO: apply omp here
+		
+		//printf("compled dft multiplication\n");
 		for(int i = 0; i < dft_h; ++i){
 			for(int j = 0; j < dft_w; ++j){
 				// i for row, j for col
-				outFFT[i][j][REAL] = a[i][j][REAL]*b[i][j][REAL] - a[i][j][IMAG]*b[i][j][IMAG];
-				outFFT[i][j][IMAG] = a[i][j][REAL]*b[i][j][IMAG] - a[i][j][IMAG]*b[i][j][REAL];
+				
+				outFFT[i * dft_w + j][REAL] = a[i * dft_w + j][REAL]*b[i * dft_w + j][REAL] 
+								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][IMAG];
+				outFFT[i * dft_w + j][IMAG] = a[i * dft_w + j][REAL]*b[i * dft_w + j][IMAG] 
+								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][REAL];
+				
+				/*
+				outFFT[i][j][REAL] = a[i][j][REAL]*b[i][j][REAL]
+							- a[i][j][IMAG]*b[i][j][IMAG];
+				outFFT[i][j][IMAG] = a[i][j][REAL]*b[i][j][IMAG]
+				       			- a[i][j][IMAG]*b[i][j][REAL];	
+				*/
 			}
 		
 		}
