@@ -3,28 +3,18 @@
 #include <cmath>
 #include <complex>
 #include <vector>
-#include <memory>
 
 #include "stb/stb_image.h"
 #include "stb/stb_image_write.h"
 
 #include "graph.hpp"
-
-// #include <pmmintrin.h>
-// /* use sse 3
-//  * ref https://software.intel.com/sites/landingpage/IntrinsicsGuide
-//  * _mm_cvtss_f32
-//  * _mm_load_ps
-//  * _mm_add_ps
-//  * _mm_mul_ps
-//  */
+#include "/usr/local/opt/libomp/include/omp.h"
 
 #include <emmintrin.h>
 #include <tmmintrin.h>
 #include <smmintrin.h>
 #include <pmmintrin.h>
 
-#include "omp.h"
 
 
 #pragma pack()
@@ -34,36 +24,36 @@ struct Pixel {
     Pixel(uint8_t r, uint8_t g, uint8_t b): r(r), g(g), b(b) {}
 
     [[nodiscard]] inline uint64_t sqr_sum() const {
-        // uint64_t u_r = r, u_g = g, u_b = b;
-        // return u_r * u_r + u_g * u_g + u_b * u_b;
-
-        uint32_t r_32 = r, g_32 = g, b_32 = b;
-        __m128i vector= _mm_set_epi32(r_32, g_32, b_32, 0);
-        vector = _mm_mullo_epi32(vector, vector);
-        __m128i zero = _mm_setzero_si128 ();
-        __m128i res = _mm_hadd_epi32(vector, zero);
-        res = _mm_hadd_epi32(res, zero);
-        return _mm_cvtsi128_si32(res);
+        uint64_t u_r = r, u_g = g, u_b = b;
+        return u_r * u_r + u_g * u_g + u_b * u_b;
+        // __m128 vector= _mm_set_ps(r, g, b, 0.0);
+        // __m128 r1 = _mm_mul_ps(vector, vector);
+        // __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
+        // __m128 sums   = _mm_add_ps(r1, shuf);
+        // shuf          = _mm_movehl_ps(shuf, sums);
+        // sums          = _mm_add_ss(sums, shuf);
+        // float result =  _mm_cvtss_f32(sums);
+        // return (int)result;
 
     }
 
     [[nodiscard]] int distance(const Pixel &pixel) const {
-        // int r_d = static_cast<int> (r) - pixel.r;
-        // int g_d = static_cast<int> (g) - pixel.g;
-        // int b_d = static_cast<int> (b) - pixel.b;
-        // return std::sqrt(r_d * r_d + g_d * g_d + b_d * b_d);
+        int r_d = static_cast<int> (r) - pixel.r;
+        int g_d = static_cast<int> (g) - pixel.g;
+        int b_d = static_cast<int> (b) - pixel.b;
+        return std::sqrt(r_d * r_d + g_d * g_d + b_d * b_d);
 
-        uint32_t r_32 = r, g_32 = g, b_32 = b;
-        uint32_t pr_32 = pixel.r, pg_32 = pixel.g, pb_32 = pixel.b;
-        __m128i vector1 = _mm_set_epi32(r_32, g_32, b_32, 0);
-        __m128i vector2 = _mm_set_epi32(pr_32, pg_32, pb_32, 0);
-        __m128i res = _mm_sub_epi32(vector1, vector2);//sub
-        res = _mm_mullo_epi32(res, res);//square
-        __m128i zero = _mm_setzero_si128 ();
-        res = _mm_hadd_epi32(res, zero);
-        res = _mm_hadd_epi32(res, zero);//sum
-        res = (__m128i) _mm_sqrt_ss((__m128) res);	// explicit conversion
-        return _mm_cvtsi128_si32(res);
+        // __m128 vector1= _mm_set_ps(r, g, b, 0.0);
+        // __m128 vector2= _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
+        // __m128 sub= _mm_sub_ps(vector1, vector2);
+        // __m128 r1 = _mm_mul_ps(sub,sub);
+        // __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
+        // __m128 sums   = _mm_add_ps(r1, shuf);
+        // shuf          = _mm_movehl_ps(shuf, sums);
+        // sums          = _mm_add_ss(sums, shuf);
+        // sums          = _mm_sqrt_ss(sums);
+        // float result =  _mm_cvtss_f32(sums);
+        // return (int)result;
     }
 
     [[nodiscard]] int sqr_distance(const Pixel &pixel) const {
@@ -71,6 +61,17 @@ struct Pixel {
         int g_d = static_cast<int> (g) - pixel.g;
         int b_d = static_cast<int> (b) - pixel.b;
         return r_d * r_d + g_d * g_d + b_d * b_d;
+
+        // __m128 vector1= _mm_set_ps(r, g, b, 0.0);
+        // __m128 vector2= _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
+        // __m128 sub= _mm_sub_ps(vector1, vector2);
+        // __m128 r1 = _mm_mul_ps(sub,sub);
+        // __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
+        // __m128 sums   = _mm_add_ps(r1, shuf);
+        // shuf          = _mm_movehl_ps(shuf, sums);
+        // sums          = _mm_add_ss(sums, shuf);
+        // float result =  _mm_cvtss_f32(sums);
+        // return (int)result;
     }
 };
 
@@ -109,6 +110,7 @@ public:
 
     [[nodiscard]] uint64_t variance() const {
         uint64_t r = 0, g = 0, b = 0;
+        //#pragma omp parallel for reduction(+:r,g,b)
         for (int i = 0; i < w * h; ++ i) {
             r += data[i].r, g += data[i].g, b += data[i].b;
         }
@@ -117,7 +119,14 @@ public:
         auto sqr = [](uint64_t x) {
             return x * x;
         };
+        // int threadID = 0;
+    //    #pragma omp parallel for reduction(+:var)
         for (int i = 0; i < w * h; ++ i) {
+            // threadID = omp_get_thread_num();
+            // #pragma omp critical
+            // {
+            //     printf("Thread %d reporting\n", threadID);
+            // }
             var += sqr(std::max<uint64_t>(r, data[i].r) - std::min<uint64_t>(r, data[i].r));
             var += sqr(std::max<uint64_t>(g, data[i].g) - std::min<uint64_t>(g, data[i].g));
             var += sqr(std::max<uint64_t>(b, data[i].b) - std::min<uint64_t>(b, data[i].b));
@@ -240,6 +249,7 @@ public:
         int n_old_seam_nodes = 0;
         std::vector<std::pair<int, int>> overlapped;
         std::vector<int> overlapped_index(w * h, -1);
+        // #pragma omp parallel for
         for (int y = y_begin; y < y_end; ++ y) {
             for (int x = x_begin; x < x_end; ++ x) {
                 int index = y * w + x;
@@ -265,6 +275,7 @@ public:
         Graph graph(overlapped.size() + n_old_seam_nodes + 2);
         int s = overlapped.size() + n_old_seam_nodes, t = overlapped.size() + n_old_seam_nodes + 1;
         int old_sean_node_index = overlapped.size();
+        // #pragma omp parallel for
         for (int i = 0; i < overlapped.size(); ++ i) {
             auto [x, y] = overlapped[i];
             int index = y * w + x;
@@ -303,6 +314,7 @@ public:
         // std::cout << " > Running min-cut algorithm ... " << std::endl;
         auto decisions = graph.min_cut(s, t);
         assert(decisions.size() == overlapped.size() + n_old_seam_nodes + 2);
+        // #pragma omp parallel for
         for (int i = 0; i < overlapped.size(); ++ i) {
             if (decisions[i]) { // Belongs to the new patch
                 auto [x, y] = overlapped[i];
