@@ -15,7 +15,7 @@
 #include <smmintrin.h>
 #include <pmmintrin.h>
 
-
+#define USESIMD 0
 
 #pragma pack()
 struct Pixel {
@@ -24,54 +24,104 @@ struct Pixel {
     Pixel(uint8_t r, uint8_t g, uint8_t b): r(r), g(g), b(b) {}
 
     [[nodiscard]] inline uint64_t sqr_sum() const {
-        // uint64_t u_r = r, u_g = g, u_b = b;
-        // return u_r * u_r + u_g * u_g + u_b * u_b;
-        __m128 vector= _mm_set_ps(r, g, b, 0.0);
-        __m128 r1 = _mm_mul_ps(vector, vector);
-        __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
-        __m128 sums   = _mm_add_ps(r1, shuf);
-        shuf          = _mm_movehl_ps(shuf, sums);
-        sums          = _mm_add_ss(sums, shuf);
-        float result =  _mm_cvtss_f32(sums);
-        return (int)result;
 
+        #if USESIMD
+            __m128i vector = _mm_set_epi32 (r, g, b, 0);
+            __m128i sum = _mm_mul_epi32 (vector, vector);
+            __m128i res = _mm_hadd_epi32(sum, sum);
+            res = _mm_hadd_epi32(res, res);
+            int result = _mm_cvtsi128_si32(res);
+            return result;
+            // __m128 vector = _mm_set_ps(r, g, b, 0.0);
+            // __m128 r1     = _mm_mul_ps(vector, vector);
+            // __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
+            // __m128 sums   = _mm_add_ps(r1, shuf);
+            // shuf          = _mm_movehl_ps(shuf, sums);
+            // sums          = _mm_add_ss(sums, shuf);
+            // float result  = _mm_cvtss_f32(sums);
+            // return (int)result;
+        #else
+            uint64_t u_r = r, u_g = g, u_b = b;
+            return u_r * u_r + u_g * u_g + u_b * u_b;
+        #endif
     }
 
-    [[nodiscard]] int distance(const Pixel &pixel) const {
-        // int r_d = static_cast<int> (r) - pixel.r;
-        // int g_d = static_cast<int> (g) - pixel.g;
-        // int b_d = static_cast<int> (b) - pixel.b;
-        // return std::sqrt(r_d * r_d + g_d * g_d + b_d * b_d);
+    [[nodiscard]] inline int distance(const Pixel &pixel) const {
+        #if USESIMD
+            // __m128 vector1 = _mm_set_ps(r, g, b, 0.0);
+            // __m128 vector2 = _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
+            // __m128 sub     = _mm_sub_ps(vector1, vector2);
+            // __m128 res     = _mm_dp_ps(sub,sub,0b11111111);
+            // res            = _mm_sqrt_ss(res);
+            // float result   = _mm_cvtss_f32(res);
+            // return (int)result;
 
-        __m128 vector1= _mm_set_ps(r, g, b, 0.0);
-        __m128 vector2= _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
-        __m128 sub= _mm_sub_ps(vector1, vector2);
-        __m128 r1 = _mm_mul_ps(sub,sub);
-        __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
-        __m128 sums   = _mm_add_ps(r1, shuf);
-        shuf          = _mm_movehl_ps(shuf, sums);
-        sums          = _mm_add_ss(sums, shuf);
-        sums          = _mm_sqrt_ss(sums);
-        float result =  _mm_cvtss_f32(sums);
-        return (int)result;
+
+            __m128i vector1 = _mm_set_epi32 (r, g, b, 0);
+            __m128i vector2 = _mm_set_epi32 (pixel.r, pixel.g, pixel.b, 0);
+            __m128i sub = _mm_sub_epi32(vector1, vector2);
+            __m128i prod = _mm_mul_epi32 (sub, sub);
+            __m128i res = _mm_hadd_epi32(prod, prod);
+            res = _mm_hadd_epi32(res, res);
+            int result = _mm_cvtsi128_si32(res);
+            
+            // std::cout   << (int)r << "," << (int)g << "," << (int)b << ";" 
+            //             << (int)pixel.r << "," << (int)pixel.g << "," << (int)pixel.b << ";" 
+            //             << (int)result << std::endl;
+            return std::sqrt(result);
+
+
+            // __m128 vector1 = _mm_set_ps(r, g, b, 0.0);
+            // __m128 vector2 = _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
+            // __m128 sub     = _mm_sub_ps(vector1, vector2);
+            // __m128 r1      = _mm_mul_ps(sub,sub);
+            // __m128 shuf    = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
+            // __m128 sums    = _mm_add_ps(r1, shuf);
+            // shuf           = _mm_movehl_ps(shuf, sums);
+            // sums           = _mm_add_ss(sums, shuf);
+            // sums           = _mm_sqrt_ss(sums);
+            // float result   = _mm_cvtss_f32(sums);
+            // return (int)result;
+        #else
+            int r_d = static_cast<int> (r) - pixel.r;
+            int g_d = static_cast<int> (g) - pixel.g;
+            int b_d = static_cast<int> (b) - pixel.b;
+            return std::sqrt(r_d * r_d + g_d * g_d + b_d * b_d);
+        #endif
     }
 
-    [[nodiscard]] int sqr_distance(const Pixel &pixel) const {
-        // int r_d = static_cast<int> (r) - pixel.r;
-        // int g_d = static_cast<int> (g) - pixel.g;
-        // int b_d = static_cast<int> (b) - pixel.b;
-        // return r_d * r_d + g_d * g_d + b_d * b_d;
+    [[nodiscard]] inline int sqr_distance(const Pixel &pixel) const {
+        #if USESIMD
+            // __m128 vector1 = _mm_set_ps(r, g, b, 0.0);
+            // __m128 vector2 = _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
+            // __m128 sub     = _mm_sub_ps(vector1, vector2);
+            // __m128 res     = _mm_dp_ps(sub,sub,0b11111111);
+            // float result   = _mm_cvtss_f32(res);
+            // return (int)result;
 
-        __m128 vector1= _mm_set_ps(r, g, b, 0.0);
-        __m128 vector2= _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
-        __m128 sub= _mm_sub_ps(vector1, vector2);
-        __m128 r1 = _mm_mul_ps(sub,sub);
-        __m128 shuf   = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
-        __m128 sums   = _mm_add_ps(r1, shuf);
-        shuf          = _mm_movehl_ps(shuf, sums);
-        sums          = _mm_add_ss(sums, shuf);
-        float result =  _mm_cvtss_f32(sums);
-        return (int)result;
+            __m128i vector1 = _mm_set_epi32 (r, g, b, 0);
+            __m128i vector2 = _mm_set_epi32 (pixel.r, pixel.g, pixel.b, 0);
+            __m128 sub = _mm_sub_epi32(vector1, vector2);
+            __m128i res = _mm_mullo_epi32 (sub, sub);
+            int result = _mm_cvtsi128_si32(res);
+            return result;
+
+            // __m128 vector1 = _mm_set_ps(r, g, b, 0.0);
+            // __m128 vector2 = _mm_set_ps(pixel.r, pixel.g, pixel.b, 0.0);
+            // __m128 sub     = _mm_sub_ps(vector1, vector2);
+            // __m128 r1      = _mm_mul_ps(sub,sub);
+            // __m128 shuf    = _mm_shuffle_ps(r1, r1, _MM_SHUFFLE(2, 3, 0, 1));
+            // __m128 sums    = _mm_add_ps(r1, shuf);
+            // shuf           = _mm_movehl_ps(shuf, sums);
+            // sums           = _mm_add_ss(sums, shuf);
+            // float result   = _mm_cvtss_f32(sums);
+            // return (int)result;
+        #else
+            int r_d = static_cast<int> (r) - pixel.r;
+            int g_d = static_cast<int> (g) - pixel.g;
+            int b_d = static_cast<int> (b) - pixel.b;
+            return r_d * r_d + g_d * g_d + b_d * b_d;
+        #endif
     }
 };
 
@@ -120,6 +170,7 @@ public:
             return x * x;
         };
         // int threadID = 0;
+
     //    #pragma omp parallel for reduction(+:var)
         for (int i = 0; i < w * h; ++ i) {
             // threadID = omp_get_thread_num();
@@ -237,7 +288,7 @@ public:
     }
 
     void apply(const std::shared_ptr<Patch> &patch) {
-        std::cout << " > Applying a new patch at (" << patch->x << ", " << patch->y << ")" << std::endl;
+        //std::cout << " > Applying a new patch at (" << patch->x << ", " << patch->y << ")" << std::endl;
         int x_begin = std::max(patch->x, 0);
         int y_begin = std::max(patch->y, 0);
         int x_end = std::min(patch->x_end(), w);

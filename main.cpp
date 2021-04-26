@@ -27,13 +27,15 @@ int main(int argc, char* argv[]) {
     end = clock();
     std::cout<<"Apply time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
 
+    
     start = clock();
     // // Refine
     std::cout << "Begin to refine:" << std::endl;
-    for (int i = 0; i < 10; ++ i) {
+    for (int i = 0; i < 5; ++ i) {
         Placer::entire_matching(canvas, texture);
     }
     end = clock();
+    
 
     std::cout << "Writing result into " << argv[2] << " ..." << std::endl;
     canvas->write(argv[2]);

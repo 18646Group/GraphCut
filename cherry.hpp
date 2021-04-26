@@ -39,6 +39,8 @@ public:
 };
 
 
+static std::default_random_engine engine = std::default_random_engine(22);
+
 /// A random number generator
 template <typename value_type>
 class [[maybe_unused]] Random {
@@ -46,17 +48,13 @@ private:
     typedef typename std::conditional<std::is_integral<value_type>::value,
             std::uniform_int_distribution<value_type>, std::uniform_real_distribution<value_type>>::type dist_t;
 
-    std::default_random_engine engine;
+    // std::default_random_engine engine;
     dist_t dist;
 
 public:
     /// The interval is closed ([`min`, `max`])
-    [[maybe_unused]] Random(value_type min, value_type max, int seed=0, bool pure=true) {
+    [[maybe_unused]] Random(value_type min, value_type max) {
         assert(min <= max);
-        if (pure) {
-            seed = std::random_device()();
-        }
-        engine = std::default_random_engine(seed);
         dist = dist_t(min, max);
     }
 

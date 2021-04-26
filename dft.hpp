@@ -80,6 +80,8 @@ void dft(int dft_w, int dft_h, ComplexPixel* dft_space, bool inverse=false) {
     // Allocate space
     double coefficient = inverse ? -1 : 1;
     assert(dft_w > 0 and dft_h > 0 and dft_w == dft_lowbit(dft_w) and dft_h == dft_lowbit(dft_h));
+    clock_t start, end;
+    start = clock();
 
     // Butterfly changes by w
     for (int row = 0; row < dft_h; ++ row) {
@@ -91,7 +93,10 @@ void dft(int dft_w, int dft_h, ComplexPixel* dft_space, bool inverse=false) {
             for (int t = dft_w / 2; (j ^= t) < t; t /= 2);
         }
     }
+    end = clock();
+    std::cout<<"time1: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
 
+    start = clock();
     // Butterfly changes by h
     for (int col = 0; col < dft_w; ++ col) {
         ComplexPixel *base = dft_space + col;
@@ -102,8 +107,13 @@ void dft(int dft_w, int dft_h, ComplexPixel* dft_space, bool inverse=false) {
             for (int t = dft_h / 2; (j ^= t) < t; t /= 2);
         }
     }
+    end = clock();
+    std::cout<<"time2: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
+
+    start = clock();
 
     // DFT by w
+    #pragma omp parallel for 
     for (int row = 0; row < dft_h; ++ row) {
         ComplexPixel *base = dft_space + row * dft_w;
         ComplexPixel wn, w, t, u;
@@ -120,8 +130,13 @@ void dft(int dft_w, int dft_h, ComplexPixel* dft_space, bool inverse=false) {
             }
         }
     }
+    end = clock();
+    std::cout<<"time3: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
+
+    start = clock();
 
     // DFT by h
+    #pragma omp parallel for 
     for (int col = 0; col < dft_w; ++ col) {
         ComplexPixel *base = dft_space + col;
         ComplexPixel wn, w, t, u;
@@ -138,15 +153,23 @@ void dft(int dft_w, int dft_h, ComplexPixel* dft_space, bool inverse=false) {
             }
         }
     }
+    end = clock();
+    std::cout<<"time4: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
+
+    start = clock();
 
     // Inverse
     if (inverse) {
         double inv = 1.0 / (dft_w * dft_h);
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for (int i = 0; i < dft_w * dft_h; ++ i) {
             dft_space[i] = dft_space[i] * inv;
         }
     }
+    end = clock();
+    std::cout<<"time5: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<std::endl;
+
+    start = clock();
 }
 
 

@@ -9,23 +9,23 @@
 class Placer {
 public:
     static void init(const std::shared_ptr<Canvas> &canvas, const std::shared_ptr<Image> &texture) {
-        auto random_y = 50;
-        auto random_x = 50;
+        // auto random_y = 50;
+        // auto random_x = 50;
 
-        for (int y = 0; y < canvas->h; y += random_y) {
-            for (int x = 0; x < canvas->w; x += random_x) {
-                auto patch = std::make_shared<Patch>(texture, x, y);
-                canvas->apply(patch);
-            }
-        }
-        // auto random_y = Random(texture->h / 3, texture->h * 2 / 3);
-        // auto random_x = Random(texture->w / 3, texture->w * 2 / 3);
-        // for (int y = 0; y < canvas->h; y += random_y()) {
-        //     for (int x = 0; x < canvas->w; x += random_x()) {
+        // for (int y = 0; y < canvas->h; y += random_y) {
+        //     for (int x = 0; x < canvas->w; x += random_x) {
         //         auto patch = std::make_shared<Patch>(texture, x, y);
         //         canvas->apply(patch);
         //     }
         // }
+        auto random_y = Random(texture->h / 3, texture->h * 2 / 3);
+        auto random_x = Random(texture->w / 3, texture->w * 2 / 3);
+        for (int y = 0; y < canvas->h; y += random_y()) {
+            for (int x = 0; x < canvas->w; x += random_x()) {
+                auto patch = std::make_shared<Patch>(texture, x, y);
+                canvas->apply(patch);
+            }
+        }
         
     }
 
