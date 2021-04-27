@@ -25,5 +25,16 @@ For more details, please refer to report.pdf.
 ## Performance support setup
 
 Need to install OpenMP and FFTW on the system.
-Using FFTW-3.3.9.
+Using FFTW-3.3.9
+
+```
+#To install fftw:
+tar -xvf fftw-3.3.9.tar	
+cd fftw-3.3.9.tar
+./configure
+make
+make install
+```
+
+.
 
