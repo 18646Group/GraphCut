@@ -33,6 +33,7 @@ public:
     static void entire_matching(const std::shared_ptr<Canvas> &canvas, const std::shared_ptr<Image> &texture, 
 		    		bool random=false, int times=100) {
         
+	printf("entire matching start \n");
 	std::shared_ptr<Patch> best_patch;
 
         if (random) {
@@ -80,78 +81,32 @@ public:
 	    auto flipped = texture->flip();	// why flip?
             int dft_w = dft_round(texture->w + canvas->w);	// pad length to 2^n
             int dft_h = dft_round(texture->h + canvas->h); 	
-	    
-	    /*
-	    ComplexPixel *dft_space1, *dft_space2;
-            dft_alloc(flipped, dft_w, dft_h, dft_space1);
-            dft_alloc(canvas, dft_w, dft_h, dft_space2);
-            dft(dft_w, dft_h, dft_space1);
-            dft(dft_w, dft_h, dft_space2);
-            dft_multiply(dft_w, dft_h, dft_space1, dft_space2);
-            dft(dft_w, dft_h, dft_space1, true);
-	    */
-	    
-
-	    // initialize fft matrix, for each color channel
-	    // size: h * (w * 2), for real and imaginary
-	    /*
-	    printf("dft start \n");
-	    fftw_complex flipped_RIn[dft_h][dft_w * 2] = {0}, flipped_ROut[dft_h][dft_w * 2] = {0},
-			 flipped_GIn[dft_h][dft_w * 2] = {0}, flipped_GOut[dft_h][dft_w * 2] = {0},
-			 flipped_BIn[dft_h][dft_w * 2] = {0}, flipped_BOut[dft_h][dft_w * 2] = {0};
-	
-	    fftw_complex canvas_RIn[dft_h][dft_w * 2] = {0}, canvas_ROut[dft_h][dft_w * 2] = {0},
-			 canvas_GIn[dft_h][dft_w * 2] = {0}, canvas_GOut[dft_h][dft_w * 2] = {0},
-			 canvas_BIn[dft_h][dft_w * 2] = {0}, canvas_BOut[dft_h][dft_w * 2] = {0};
-	    // output buffer
-	    fftw_complex outputFFT_R[dft_h][dft_w * 2] = {0}, output_R[dft_h][dft_w * 2] = {0},
-			 outputFFT_G[dft_h][dft_w * 2] = {0}, output_G[dft_h][dft_w * 2] = {0},
-			 outputFFT_B[dft_h][dft_w * 2] = {0}, output_B[dft_h][dft_w * 2] = {0}; 
-	    */
-
-	    /*
-	    printf("dft start \n");
-	    fftw_complex flipped_RIn[dft_h * dft_w * 2] = {0}, flipped_ROut[dft_h * dft_w * 2] = {0},
-			 flipped_GIn[dft_h * dft_w * 2] = {0}, flipped_GOut[dft_h * dft_w * 2] = {0},
-			 flipped_BIn[dft_h * dft_w * 2] = {0}, flipped_BOut[dft_h * dft_w * 2] = {0};
-	    
-	    printf("check1 \n");
-	    fftw_complex canvas_RIn[dft_h * dft_w * 2] = {0}, canvas_ROut[dft_h * dft_w * 2] = {0},
-			 canvas_GIn[dft_h * dft_w * 2] = {0}, canvas_GOut[dft_h * dft_w * 2] = {0},
-			 canvas_BIn[dft_h * dft_w * 2] = {0}, canvas_BOut[dft_h * dft_w * 2] = {0};
-	    // output buffer
-	    printf("check2 \n");
-	     fftw_complex outputFFT_R[dft_h * dft_w * 2] = {0}, output_R[dft_h * dft_w * 2] = {0},
-			  outputFFT_G[dft_h * dft_w * 2] = {0}, output_G[dft_h * dft_w * 2] = {0},
-			  outputFFT_B[dft_h * dft_w * 2] = {0}, output_B[dft_h * dft_w * 2] = {0};
-	    */
-
 
 	    //TODO: allocate with malloc
-	    fftw_complex* flipped_RIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-		    	  flipped_ROut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  flipped_GIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  flipped_GOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  flipped_BIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  flipped_BOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
+	    printf("allocate dft buffer \n");
+	    fftw_complex  *flipped_RIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+		    	  *flipped_ROut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *flipped_GIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *flipped_GOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *flipped_BIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *flipped_BOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
 	
-	    fftw_complex* canvas_RIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-		    	  canvas_ROut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  canvas_GIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  canvas_GOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  canvas_BIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  canvas_BOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
+	    fftw_complex  *canvas_RIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+		    	  *canvas_ROut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *canvas_GIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *canvas_GOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *canvas_BIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *canvas_BOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
 
-	    fftw_complex* outputFFT_R = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  output_R = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  outputFFT_G = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  output_G = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  outputFFT_B = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-			  output_B = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
+	    fftw_complex  *outputFFT_R = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *output_R = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *outputFFT_G = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *output_G = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *outputFFT_B = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
+			  *output_B = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
 
 
 	    // load in pixel values
-	    printf("dft load\n");
 	    DFT::dft_load(flipped, dft_w, dft_h, 
 			    flipped_RIn, flipped_GIn, flipped_BIn);
 
@@ -159,7 +114,6 @@ public:
 			    canvas_RIn, canvas_GIn, canvas_BIn);
 
 	    // perform fft for each channel
-	    printf("perform dft for each channel\n");
 	    DFT::dft(flipped_RIn, flipped_ROut, dft_w, dft_h);
 	    DFT::dft(flipped_GIn, flipped_GOut, dft_w, dft_h);
 	    DFT::dft(flipped_BIn, flipped_BOut, dft_w, dft_h);
@@ -177,9 +131,8 @@ public:
 	    DFT::idft(outputFFT_R, output_R, dft_w, dft_h);
 	    DFT::idft(outputFFT_G, output_G, dft_w, dft_h);
 	    DFT::idft(outputFFT_B, output_B, dft_w, dft_h);
-
-	    printf("dft finished\n");
-
+		
+	    printf("dft multiply finished \n");
 
             // Get results
             uint64_t variance = texture->variance();
@@ -196,13 +149,6 @@ public:
                     ssd += query(canvas_sum, x, y, overlapped_w, overlapped_h, canvas->w, canvas->h);
                     
 		    // dft output used here
-		    /*
-		    ssd -= (uint64_t) std::floor(2.0 * (output_R[texture->h + y - 1][texture->w + x - 1][REAL] 
-					    		+ output_G[texture->h + y - 1][texture->w + x - 1][REAL] 
-					    		+ output_B[texture->h + y - 1][texture->w + x - 1][REAL]) );
-                    */
-		    
-		    
 		    ssd -= (uint64_t) std::floor(2.0 * (output_R[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL] 
 					    		+ output_G[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL]
 							+ output_B[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL]) );
@@ -212,10 +158,16 @@ public:
                     possibility[index] = std::exp(-1.0 * ssd / (possibility_k * variance));
                 }
             }
+
+	    printf("get ssd \n");
+
             double possibility_sum = 0;
             for (int i = 0; i < canvas->h * canvas->w; ++ i) {
                 possibility_sum += possibility[i];
             }
+
+	    printf("get possibility sum\n");
+
             double position = Random<double>(0, 1)(), up = 0;
             for (int y = 0, index = 0; y < canvas->h and not best_patch; ++ y) {
                 for (int x = 0; x < canvas->w; ++ x, ++ index) {
@@ -228,29 +180,42 @@ public:
                 }
             }
             assert(best_patch);
+	    
+	    printf("find current best patch\n");
+
 
             // Free resources
+	    printf("start free resources\n");
             std::free(possibility);
             std::free(texture_sum);
             std::free(canvas_sum);
-	    
-            //dft_free(dft_space1);
-            //dft_free(dft_space2);
-	    
-	    
+	   
+
+
+
+
+	    printf("free possibility, texture sum, canvas sum\n");
+
 	    fftw_free(flipped_RIn); fftw_free(flipped_ROut);
 	    fftw_free(flipped_GIn); fftw_free(flipped_GOut);
 	    fftw_free(flipped_BIn); fftw_free(flipped_BOut);
+
+	    printf("free flipped RGB in and out\n");
 
 	    fftw_free(canvas_RIn); fftw_free(canvas_ROut);
 	    fftw_free(canvas_GIn); fftw_free(canvas_GOut);
 	    fftw_free(canvas_BIn); fftw_free(canvas_BOut);
 
-	    fftw_free(outputFFT_R); fftw_free(output_R);
-	    fftw_free(outputFFT_G); fftw_free(output_G);
-	    fftw_free(outputFFT_B); fftw_free(output_B);
+	    printf("free canvas RGB in and out \n");
+
+	    fftw_free(outputFFT_R); fftw_free(output_R); printf("free output R in and out\n");
+	    fftw_free(outputFFT_G); fftw_free(output_G); printf("free output G in and out\n");
+	    fftw_free(outputFFT_B); fftw_free(output_B); printf("free output B in and out\n");
+
+	    printf("free all resources");
         }
         canvas->apply(best_patch);
+	printf("entire matching finished \n");
     }
 
     static void sub_patch_matching(const std::shared_ptr<Canvas> &canvas, const std::shared_ptr<Image> &texture, int times=100) {

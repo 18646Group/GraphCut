@@ -181,10 +181,11 @@ namespace DFT{
 		// matR/matG/matB has been initialized to zero before function
 		// matR/matG/matB: (dft_w * dft_h) * 2, row major	
 		
-		
-		printf("dft_w: %d, image->h: %d, dft_w*dft_h: %d, h*w %d\n",
+		/*	
+		printf("dft_w: %d, image->h: %d, dft_w*dft_h: %d, h*w %d \n",
 			dft_w, image->h, dft_w*dft_h, (image->h)*(image->w));	
-		
+		*/
+
 		for(int i = 0, index = 0; i < image -> h; ++i){
 			for(int j = 0; j < image -> w; ++j, ++index){
 				
