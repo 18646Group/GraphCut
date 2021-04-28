@@ -129,23 +129,15 @@ public:
 	    DFT::dft_multiply(dft_w, dft_h, flipped_BOut, canvas_BOut, outputFFT_B);
 
 	    // ifft
+	    /*
 	    DFT::idft(outputFFT_R, output_R, dft_w, dft_h);
 	    DFT::idft(outputFFT_G, output_G, dft_w, dft_h);
 	    DFT::idft(outputFFT_B, output_B, dft_w, dft_h);
-		
-	    
-
-	    /*
-	    // reuse buffer, single channel, all same size
-	    fftw_complex *flipped_Chan_In = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
-	    fftw_complex *flipped_Chan_Out = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
-	    fftw_complex *canvas_Chan_In = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
-	    fftw_complex *canvas_Chan_Out = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
-	
-	    fftw_complex *outputFFT_R = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
-	    fftw_complex *outputFFT_G = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
-	    fftw_complex *outputFFT_B = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
 	    */
+    	    DFT::dft(outputFFT_R, output_R, dft_w, dft_h);
+            DFT::dft(outputFFT_G, output_G, dft_w, dft_h);
+            DFT::dft(outputFFT_B, output_B, dft_w, dft_h);	    
+
 
 
 	    printf("dft multiply finished \n");
@@ -155,7 +147,8 @@ public:
             uint64_t ssd = 0;
 	    auto *possibility = static_cast<double*> (std::malloc(canvas->h * canvas->w * sizeof(double)));
             
-	    
+	   
+	    double normalize = 1.0 / (dft_w * dft_w * dft_h * dft_h); 
 	    for (int y = 0, index = 0; y < canvas->h; ++ y) {
                 for (int x = 0; x < canvas->w; ++ x, ++ index) {
                     int overlapped_w = std::min(texture->w, canvas->w - x);
@@ -166,7 +159,7 @@ public:
                     ssd += query(canvas_sum, x, y, overlapped_w, overlapped_h, canvas->w, canvas->h);
                     
 		    // dft output used here
-		    ssd -= (uint64_t) std::floor(2.0 * (output_R[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL] 
+		    ssd -= (uint64_t) std::floor(2.0 * normalize * (output_R[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL] 
 					    		+ output_G[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL]
 							+ output_B[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL]) );
 		    
@@ -183,7 +176,7 @@ public:
                 possibility_sum += possibility[i];
             }
 
-	    printf("get possibility sum\n");
+	    printf("possibility sum: %f\n", possibility_sum);
 
             double position = Random<double>(0, 1)(), up = 0;
             for (int y = 0, index = 0; y < canvas->h and not best_patch; ++ y) {
@@ -207,29 +200,21 @@ public:
             std::free(texture_sum);
             std::free(canvas_sum);
 	  
-	    printf("free possibility, texture sum, canvas sum\n");
-
-
 	    
 	    fftw_free(flipped_RIn); fftw_free(flipped_ROut);
 	    fftw_free(flipped_GIn); fftw_free(flipped_GOut);
 	    fftw_free(flipped_BIn); fftw_free(flipped_BOut);
 
-	    printf("free flipped RGB in and out\n");
-
 	    fftw_free(canvas_RIn); fftw_free(canvas_ROut);
 	    fftw_free(canvas_GIn); fftw_free(canvas_GOut);
 	    fftw_free(canvas_BIn); fftw_free(canvas_BOut);
 
-	    printf("free canvas RGB in and out \n");
-
-	    fftw_free(outputFFT_R); fftw_free(output_R); printf("free output R in and out\n");
-	    fftw_free(outputFFT_G); fftw_free(output_G); printf("free output G in and out\n");
-	    fftw_free(outputFFT_B); fftw_free(output_B); printf("free output B in and out\n");
+	    fftw_free(outputFFT_R); fftw_free(output_R);
+	    fftw_free(outputFFT_G); fftw_free(output_G); 
+	    fftw_free(outputFFT_B); fftw_free(output_B); 
 	    
 	    printf("free all resources");
         }
-	// TODO: check what cause seg fault here
 	
 	if((best_patch->x <= 0) || (best_patch->y <= 0) 
 		|| (best_patch->x_end() > canvas->w) || (best_patch->y_end() > canvas->h)){

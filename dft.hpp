@@ -208,16 +208,6 @@ namespace DFT{
 		fftw_cleanup();
 	}
 
-	void dft_real(double *in, fftw_complex *out, const int dft_w, const int dft_h){
-		
-		fftw_plan p;
-		p = fftw_plan_dft_r2c_2d(dft_h, dft_w, in, out, FFTW_ESTIMATE);
-		
-		fftw_execute(p);
-		fftw_destroy_plan(p);
-		fftw_cleanup();
-	}
-
 
 	void idft(fftw_complex *in, fftw_complex *out, const int dft_w, const int dft_h){
 		// initialize 2d fft
@@ -247,12 +237,13 @@ namespace DFT{
 				*/
 
 
+				
 				// compensate conjugate
 				outFFT[i * dft_w + j][REAL] = a[i * dft_w + j][REAL]*b[i * dft_w + j][REAL]
 								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][IMAG];
 				outFFT[i * dft_w + j][IMAG] = -1.0 * a[i * dft_w + j][REAL]*b[i * dft_w + j][IMAG]
-								+ a[i * dft_w + j][IMAG]*b[i * dft_w + j][REAL];
-
+								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][REAL];
+				
 			}
 		
 		}
