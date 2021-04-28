@@ -33,6 +33,8 @@ int main() {
     fftw_complex  *fftw_spaceIn= (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
     fftw_complex  *fftw_spaceOut= (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
 
+    // TODO: test multiplication result with added minus sign for conjugate
+
     /*
     double *fftw_real = fftw_alloc_real(dft_h * dft_w);
     fftw_complex *fftw_imag = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));	    
