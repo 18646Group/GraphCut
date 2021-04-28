@@ -3,6 +3,8 @@
 #include <cmath>
 #include <complex>
 #include <vector>
+#include <cassert>
+#include <memory>
 
 #include "stb/stb_image.h"
 #include "stb/stb_image_write.h"

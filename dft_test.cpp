@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "dft.hpp"
-
+#include <memory>
 
 int main() {
     // Set pixels

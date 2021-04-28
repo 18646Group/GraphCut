@@ -9,6 +9,7 @@
 #include <set>
 #include <string>
 #include <type_traits>
+#include <cstring>
 
 
 // Returning a const value is not recommended by Clang-Tidy for readability, but for functionality we need it
