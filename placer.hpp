@@ -33,7 +33,7 @@ public:
     static void entire_matching(const std::shared_ptr<Canvas> &canvas, const std::shared_ptr<Image> &texture, 
 		    		bool random=false, int times=100) {
         
-	printf("entire matching start \n");
+	//printf("entire matching start \n");
 	std::shared_ptr<Patch> best_patch;
 
         if (random) {
@@ -77,14 +77,12 @@ public:
             do_prefix_sum(canvas->w, canvas->h, canvas->data, canvas_sum);
 
             // FFT
-	    // TODO: rewrite this part with fftw
 	    auto flipped = texture->flip();	// why flip?
             int dft_w = dft_round(texture->w + canvas->w);	// pad length to 2^n
             int dft_h = dft_round(texture->h + canvas->h); 	
 
-	    //TODO: allocate with malloc
 	    
-	    printf("allocate dft buffer \n");
+	    //printf("allocate dft buffer \n");
 	    fftw_complex  *flipped_RIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
 		    	  *flipped_ROut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
 			  *flipped_GIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
@@ -140,7 +138,7 @@ public:
 
 
 
-	    printf("dft multiply finished \n");
+	    //printf("dft multiply finished \n");
 	    
             // Get results
             uint64_t variance = texture->variance();
@@ -169,14 +167,14 @@ public:
                 }
             }
 
-	    printf("get ssd \n");
+	    //printf("get ssd \n");
 
             double possibility_sum = 0;
             for (int i = 0; i < canvas->h * canvas->w; ++ i) {
                 possibility_sum += possibility[i];
             }
 
-	    printf("possibility sum: %f\n", possibility_sum);
+	    //printf("possibility sum: %f\n", possibility_sum);
 
             double position = Random<double>(0, 1)(), up = 0;
             for (int y = 0, index = 0; y < canvas->h and not best_patch; ++ y) {
@@ -191,11 +189,11 @@ public:
             }
             assert(best_patch);
 	    
-	    printf("find current best patch\n");
+	    //printf("find current best patch\n");
 	    
 
             // Free resources
-	    printf("start free resources\n");
+	    //printf("start free resources\n");
             std::free(possibility);
             std::free(texture_sum);
             std::free(canvas_sum);
@@ -213,18 +211,19 @@ public:
 	    fftw_free(outputFFT_G); fftw_free(output_G); 
 	    fftw_free(outputFFT_B); fftw_free(output_B); 
 	    
-	    printf("free all resources");
+	    //printf("free all resources");
         }
 	
+	/*
 	if((best_patch->x <= 0) || (best_patch->y <= 0) 
 		|| (best_patch->x_end() > canvas->w) || (best_patch->y_end() > canvas->h)){
 		printf("patch bigger than canvas!!! \n");
 	}
-
+	*/
 
 	canvas->apply(best_patch);
 	
-	printf("entire matching finished \n");
+	//printf("entire matching finished \n");
     }
 
     static void sub_patch_matching(const std::shared_ptr<Canvas> &canvas, const std::shared_ptr<Image> &texture, int times=100) {
