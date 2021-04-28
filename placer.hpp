@@ -101,6 +101,9 @@ public:
             for (int i = 0; i < canvas->h * canvas->w; ++ i) {
                 possibility_sum += possibility[i];
             }
+
+	    printf("possibility_sum: %f\n", possibility_sum);
+
             double position = Random<double>(0, 1)(), up = 0;
             for (int y = 0, index = 0; y < canvas->h and not best_patch; ++ y) {
                 for (int x = 0; x < canvas->w; ++ x, ++ index) {
