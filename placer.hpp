@@ -136,6 +136,16 @@ public:
             DFT::dft(outputFFT_G, output_G, dft_w, dft_h);
             DFT::dft(outputFFT_B, output_B, dft_w, dft_h);	    
 
+	    std::cout << std::endl;
+	    std::cout << "outputFFT_R normalized：" << std::endl;
+    	    for (int i = 0; i < 5; ++ i) {
+        	for (int j = 0; j < 5; ++ j) {
+            	    std::cout << "(" << outputFFT_R[i * dft_w + j][REAL] / (dft_h * dft_w) << ","
+                    	<< outputFFT_R[i * dft_w + j][IMAG] / (dft_h * dft_w) << ") ";
+        	}
+        	std::cout << std::endl;
+    	    }
+	    std::cout << std::endl;
 
 
 	    //printf("dft multiply finished \n");
@@ -146,7 +156,7 @@ public:
 	    auto *possibility = static_cast<double*> (std::malloc(canvas->h * canvas->w * sizeof(double)));
             
 	   
-	    double normalize = 1.0 / (dft_w * dft_w * dft_h * dft_h); 
+	    double normalize = 1.0 / (dft_w * dft_h); 
 	    for (int y = 0, index = 0; y < canvas->h; ++ y) {
                 for (int x = 0; x < canvas->w; ++ x, ++ index) {
                     int overlapped_w = std::min(texture->w, canvas->w - x);
@@ -160,7 +170,6 @@ public:
 		    ssd -= (uint64_t) std::floor(2.0 * normalize * (output_R[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL] 
 					    		+ output_G[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL]
 							+ output_B[(texture->h + y - 1)* dft_w + texture->w + x - 1][REAL]) );
-		    
 
 		    ssd /= overlapped_w * overlapped_h;
                     possibility[index] = std::exp(-1.0 * ssd / (possibility_k * variance));
@@ -174,7 +183,7 @@ public:
                 possibility_sum += possibility[i];
             }
 
-	    //printf("possibility sum: %f\n", possibility_sum);
+	    printf("possibility sum: %f\n", possibility_sum);
 
             double position = Random<double>(0, 1)(), up = 0;
             for (int y = 0, index = 0; y < canvas->h and not best_patch; ++ y) {
