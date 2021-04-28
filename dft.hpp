@@ -193,11 +193,6 @@ namespace DFT{
 				matG[i * dft_w + j][REAL] = (double)(image -> data[index].g);
 				matB[i * dft_w + j][REAL] = (double)(image -> data[index].b);
 				
-				/*
-				matR[i][j][REAL] = (double)(image -> data[index].r);
-				matG[i][j][REAL] = (double)(image -> data[index].g);
-				matB[i][j][REAL] = (double)(image -> data[index].b);
-				*/
 			}
 		}
 	}
@@ -212,6 +207,17 @@ namespace DFT{
 		fftw_destroy_plan(p);
 		fftw_cleanup();
 	}
+
+	void dft_real(double *in, fftw_complex *out, const int dft_w, const int dft_h){
+		
+		fftw_plan p;
+		p = fftw_plan_dft_r2c_2d(dft_h, dft_w, in, out, FFTW_ESTIMATE);
+		
+		fftw_execute(p);
+		fftw_destroy_plan(p);
+		fftw_cleanup();
+	}
+
 
 	void idft(fftw_complex *in, fftw_complex *out, const int dft_w, const int dft_h){
 		// initialize 2d fft
@@ -233,18 +239,20 @@ namespace DFT{
 		for(int i = 0; i < dft_h; ++i){
 			for(int j = 0; j < dft_w; ++j){
 				// i for row, j for col
-				
+				/*
 				outFFT[i * dft_w + j][REAL] = a[i * dft_w + j][REAL]*b[i * dft_w + j][REAL] 
 								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][IMAG];
 				outFFT[i * dft_w + j][IMAG] = a[i * dft_w + j][REAL]*b[i * dft_w + j][IMAG] 
 								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][REAL];
-				
-				/*
-				outFFT[i][j][REAL] = a[i][j][REAL]*b[i][j][REAL]
-							- a[i][j][IMAG]*b[i][j][IMAG];
-				outFFT[i][j][IMAG] = a[i][j][REAL]*b[i][j][IMAG]
-				       			- a[i][j][IMAG]*b[i][j][REAL];	
 				*/
+
+
+				// compensate conjugate
+				outFFT[i * dft_w + j][REAL] = a[i * dft_w + j][REAL]*b[i * dft_w + j][REAL]
+								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][IMAG];
+				outFFT[i * dft_w + j][IMAG] = -1.0 * a[i * dft_w + j][REAL]*b[i * dft_w + j][IMAG]
+								+ a[i * dft_w + j][IMAG]*b[i * dft_w + j][REAL];
+
 			}
 		
 		}
