@@ -22,15 +22,42 @@ int main() {
     int dft_w = dft_round(5), dft_h = dft_round(7);
     ComplexPixel *dft_space1, *dft_space2;
     dft_alloc(image1, dft_w, dft_h, dft_space1);
-    dft_alloc(image2, dft_w, dft_h, dft_space2);
+
+    std::cout << "dft_space1 before dft: " << std::endl;
+    for (int y = 0, index = 0; y < dft_h; ++ y) {
+        for (int x = 0; x < dft_w; ++ x, ++ index) {
+            std::cout << dft_space1[index].b << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    //dft_alloc(image2, dft_w, dft_h, dft_space2);
     dft(dft_w, dft_h, dft_space1);
-    dft(dft_w, dft_h, dft_space2);
-    dft_multiply(dft_w, dft_h, dft_space1, dft_space2);
-
-
-    dft(dft_w, dft_h, dft_space1, true);
+    //dft(dft_w, dft_h, dft_space2);
     
+    
+    std::cout << "dft_space1 after dft: " << std::endl;
+    for (int y = 0, index = 0; y < dft_h; ++ y) {
+        for (int x = 0; x < dft_w; ++ x, ++ index) {
+            std::cout << dft_space1[index].b << " ";
+        }
+        std::cout << std::endl;
+    }
+    
+    
+    
+    
+    
+    //dft_multiply(dft_w, dft_h, dft_space1, dft_space2);
+    //dft(dft_w, dft_h, dft_space1, true);
      
+
+
+
+
+
+
+
 
     fftw_complex *fftw_space1In= (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
     fftw_complex *fftw_space1Out= (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
@@ -58,35 +85,42 @@ int main() {
 	}
     }
 
+   
+
+
+    std::cout << "fftw_space1In：" << std::endl;
+    for (int i = 0; i < dft_h; ++ i) {
+        for (int j = 0; j < dft_w; ++ j) {
+            std::cout << "(" << fftw_space1In[i * dft_w + j][REAL] << ","
+                    << fftw_space1In[i * dft_w + j][IMAG] << ") ";
+        }
+        std::cout << std::endl;
+    }
+
 
 
     DFT::dft(fftw_space1In, fftw_space1Out, dft_w, dft_h);
     DFT::dft(fftw_space2In, fftw_space2Out, dft_w, dft_h);
+
+
+    std::cout << "fftw_space1In：" << std::endl;
+    for (int i = 0; i < dft_h; ++ i) {
+        for (int j = 0; j < dft_w; ++ j) {
+            std::cout << "(" << fftw_space1Out[i * dft_w + j][REAL] << ","
+                    << fftw_space1Out[i * dft_w + j][IMAG] << ") ";
+        }
+        std::cout << std::endl;
+    }
+
+
 
     DFT::dft_multiply(dft_w, dft_h, fftw_space1Out, fftw_space2Out, fftw_resultIn);
     
     DFT::dft(fftw_resultIn, fftw_resultOut, dft_w, dft_h);
 
     // Show result
+
     /*
-    std::cout << "dft_space1: " << std::endl;
-    for (int y = 0, index = 0; y < dft_h; ++ y) {
-        for (int x = 0; x < dft_w; ++ x, ++ index) {
-            std::cout << dft_space1[index].b << " ";
-        }
-        std::cout << std::endl;
-    }
-
-
-    std::cout << "fftw_space1Out：" << std::endl;
-    for (int i = 0; i < dft_h; ++ i) {
-        for (int j = 0; j < dft_w; ++ j) {
-            std::cout << "(" << fftw_space1Out[i * dft_w + j][REAL] << "," 
-		    << fftw_space1Out[i * dft_w + j][IMAG] << ") ";
-        }
-        std::cout << std::endl;
-    }
-
     std::cout << std::endl;
     std::cout << "dft_space2: " << std::endl;
     for (int y = 0, index = 0; y < dft_h; ++ y) {
@@ -106,7 +140,7 @@ int main() {
     }
     */
 
-
+    /*
     std::cout << "dft_space1: " << std::endl;
     for (int y = 0, index = 0; y < dft_h; ++ y) {
         for (int x = 0; x < dft_w; ++ x, ++ index) {
@@ -134,7 +168,7 @@ int main() {
         }
         std::cout << std::endl;
     }
-
+    */
 
     // Free
     dft_free(dft_space1);

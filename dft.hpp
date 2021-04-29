@@ -3,6 +3,7 @@
 #include "image.hpp"
 #include <fftw3.h>
 #include <cstdlib>	// for debug
+#include <cmath>
 
 // macros for complex number
 #define REAL 0
@@ -180,11 +181,6 @@ namespace DFT{
 			fftw_complex *matR, fftw_complex *matG, fftw_complex *matB){
 		// matR/matG/matB has been initialized to zero before function
 		// matR/matG/matB: (dft_w * dft_h) * 2, row major	
-		
-		/*	
-		printf("dft_w: %d, image->h: %d, dft_w*dft_h: %d, h*w %d \n",
-			dft_w, image->h, dft_w*dft_h, (image->h)*(image->w));	
-		*/
 
 		for(int i = 0, index = 0; i < image -> h; ++i){
 			for(int j = 0; j < image -> w; ++j, ++index){
@@ -193,6 +189,9 @@ namespace DFT{
 				matG[i * dft_w + j][REAL] = (double)(image -> data[index].g);
 				matB[i * dft_w + j][REAL] = (double)(image -> data[index].b);
 				
+
+				if(std::isnan((double)(image -> data[index].r))){ printf("NAN in data!!!! \n"); }
+
 				// just to make sure no garbage in memory
 				matR[i * dft_w + j][IMAG] = 0.0;
 				matG[i * dft_w + j][IMAG] = 0.0;
@@ -205,7 +204,7 @@ namespace DFT{
 	void dft(fftw_complex *in, fftw_complex *out, const int dft_w, const int dft_h){
 		// initialize 2d fft
 		fftw_plan p;
-		p = fftw_plan_dft_2d(dft_h, dft_w, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+		p = fftw_plan_dft_2d(dft_h, dft_w, in, out, FFTW_FORWARD, FFTW_ESTIMATE); // if use FFTW_MEASURE, need to initialze input after set the plan
 		fftw_execute(p);
 		// clean up
 		fftw_destroy_plan(p);
@@ -233,21 +232,21 @@ namespace DFT{
 		for(int i = 0; i < dft_h; ++i){
 			for(int j = 0; j < dft_w; ++j){
 				// i for row, j for col
-				/*
+				
 				outFFT[i * dft_w + j][REAL] = a[i * dft_w + j][REAL]*b[i * dft_w + j][REAL] 
 								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][IMAG];
 				outFFT[i * dft_w + j][IMAG] = a[i * dft_w + j][REAL]*b[i * dft_w + j][IMAG] 
 								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][REAL];
-				*/
-
-
 				
+
+
+				/*
 				// compensate conjugate
 				outFFT[i * dft_w + j][REAL] = a[i * dft_w + j][REAL]*b[i * dft_w + j][REAL]
 								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][IMAG];
 				outFFT[i * dft_w + j][IMAG] = -1.0 * a[i * dft_w + j][REAL]*b[i * dft_w + j][IMAG]
 								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][REAL];
-				
+				*/
 			}
 		
 		}

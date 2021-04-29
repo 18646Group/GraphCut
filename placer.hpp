@@ -114,7 +114,8 @@ public:
 
 
 	   // TODO: there are nan value when loading
-	   std::cout << std::endl;
+	    /*
+	    std::cout << std::endl;
             std::cout << "flipped_RIn：" << std::endl;
             for (int i = 0; i < 5; ++ i) {
                 for (int j = 0; j < 5; ++ j) {
@@ -135,7 +136,7 @@ public:
                 std::cout << std::endl;
             }
             std::cout << std::endl;
-
+	    */
 
 	    // perform fft for each channel
 	    DFT::dft(flipped_RIn, flipped_ROut, dft_w, dft_h);
@@ -152,19 +153,22 @@ public:
 	    DFT::dft_multiply(dft_w, dft_h, flipped_BOut, canvas_BOut, outputFFT_B);
 
 	    // ifft
-	    /*
+	    
 	    DFT::idft(outputFFT_R, output_R, dft_w, dft_h);
 	    DFT::idft(outputFFT_G, output_G, dft_w, dft_h);
 	    DFT::idft(outputFFT_B, output_B, dft_w, dft_h);
-	    */
+	    /*
     	    DFT::dft(outputFFT_R, output_R, dft_w, dft_h);
             DFT::dft(outputFFT_G, output_G, dft_w, dft_h);
             DFT::dft(outputFFT_B, output_B, dft_w, dft_h);	    
-
+	    */
 
 
 	    // TODO: there are nan in output_R, output_G, and output_B
+	    //std::cout << "flipped_ROut: " << std::endl;
+	    //std::cout << "(" << flipped_ROut[0][REAL]<< "," << flipped_ROut[0][IMAG] << ") ";
 
+	    
 	    std::cout << std::endl;
             std::cout << "flipped_ROut：" << std::endl;
             for (int i = 0; i < 5; ++ i) {
@@ -176,7 +180,7 @@ public:
             }
             std::cout << std::endl;
 
-
+	    /*
 	    std::cout << std::endl;
             std::cout << "canvas_ROut：" << std::endl;
             for (int i = 0; i < 5; ++ i) {
@@ -212,7 +216,7 @@ public:
         	std::cout << std::endl;
     	    }
 	    std::cout << std::endl;
-
+	    */
 
 	    //printf("dft multiply finished \n");
 	    
@@ -249,7 +253,7 @@ public:
                 possibility_sum += possibility[i];
             }
 
-	    printf("possibility sum: %f\n", possibility_sum);
+	    //printf("possibility sum: %f\n", possibility_sum);
 
             double position = Random<double>(0, 1)(), up = 0;
             for (int y = 0, index = 0; y < canvas->h and not best_patch; ++ y) {
