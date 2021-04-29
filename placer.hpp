@@ -112,6 +112,31 @@ public:
 	    DFT::dft_load(canvas, dft_w, dft_h, 
 			    canvas_RIn, canvas_GIn, canvas_BIn);
 
+
+	   // TODO: there are nan value when loading
+	   std::cout << std::endl;
+            std::cout << "flipped_RIn：" << std::endl;
+            for (int i = 0; i < 5; ++ i) {
+                for (int j = 0; j < 5; ++ j) {
+                    std::cout << "(" << flipped_RIn[i * dft_w + j][REAL] << ","
+                        << flipped_RIn[i * dft_w + j][IMAG] << ") ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+
+	    std::cout << std::endl;
+            std::cout << "canvas_RIn：" << std::endl;
+            for (int i = 0; i < 5; ++ i) {
+                for (int j = 0; j < 5; ++ j) {
+                    std::cout << "(" << canvas_RIn[i * dft_w + j][REAL] << ","
+                        << canvas_RIn[i * dft_w + j][IMAG] << ") ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+
+
 	    // perform fft for each channel
 	    DFT::dft(flipped_RIn, flipped_ROut, dft_w, dft_h);
 	    DFT::dft(flipped_GIn, flipped_GOut, dft_w, dft_h);
@@ -136,12 +161,53 @@ public:
             DFT::dft(outputFFT_G, output_G, dft_w, dft_h);
             DFT::dft(outputFFT_B, output_B, dft_w, dft_h);	    
 
+
+
+	    // TODO: there are nan in output_R, output_G, and output_B
+
 	    std::cout << std::endl;
-	    std::cout << "outputFFT_R normalized：" << std::endl;
+            std::cout << "flipped_ROut：" << std::endl;
+            for (int i = 0; i < 5; ++ i) {
+                for (int j = 0; j < 5; ++ j) {
+                    std::cout << "(" << flipped_ROut[i * dft_w + j][REAL]<< ","
+                        << flipped_ROut[i * dft_w + j][IMAG] << ") ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+
+
+	    std::cout << std::endl;
+            std::cout << "canvas_ROut：" << std::endl;
+            for (int i = 0; i < 5; ++ i) {
+                for (int j = 0; j < 5; ++ j) {
+                    std::cout << "(" << canvas_ROut[i * dft_w + j][REAL]<< ","
+                        << canvas_ROut[i * dft_w + j][IMAG] << ") ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+
+
+
+	    std::cout << std::endl;
+            std::cout << "outputFFT_R：" << std::endl;
+            for (int i = 0; i < 5; ++ i) {
+                for (int j = 0; j < 5; ++ j) {
+                    std::cout << "(" << outputFFT_R[i * dft_w + j][REAL]<< ","
+                        << outputFFT_R[i * dft_w + j][IMAG] << ") ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+
+
+	    std::cout << std::endl;
+	    std::cout << "output_R normalized：" << std::endl;
     	    for (int i = 0; i < 5; ++ i) {
         	for (int j = 0; j < 5; ++ j) {
-            	    std::cout << "(" << outputFFT_R[i * dft_w + j][REAL] / (dft_h * dft_w) << ","
-                    	<< outputFFT_R[i * dft_w + j][IMAG] / (dft_h * dft_w) << ") ";
+            	    std::cout << "(" << output_R[i * dft_w + j][REAL] / (dft_h * dft_w) << ","
+                    	<< output_R[i * dft_w + j][IMAG] / (dft_h * dft_w) << ") ";
         	}
         	std::cout << std::endl;
     	    }

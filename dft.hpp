@@ -193,6 +193,10 @@ namespace DFT{
 				matG[i * dft_w + j][REAL] = (double)(image -> data[index].g);
 				matB[i * dft_w + j][REAL] = (double)(image -> data[index].b);
 				
+				// just to make sure no garbage in memory
+				matR[i * dft_w + j][IMAG] = 0.0;
+				matG[i * dft_w + j][IMAG] = 0.0;
+				matB[i * dft_w + j][IMAG] = 0.0;
 			}
 		}
 	}
