@@ -165,8 +165,17 @@ public:
 
 
 	    // TODO: there are nan in output_R, output_G, and output_B
-	    //std::cout << "flipped_ROut: " << std::endl;
-	    //std::cout << "(" << flipped_ROut[0][REAL]<< "," << flipped_ROut[0][IMAG] << ") ";
+
+        std::cout << std::endl;
+            std::cout << "flipped_RIn：" << std::endl;
+            for (int i = 0; i < 5; ++ i) {
+                for (int j = 0; j < 5; ++ j) {
+                    std::cout << "(" << flipped_RIn[i * dft_w + j][REAL]<< ","
+                        << flipped_RIn[i * dft_w + j][IMAG] << ") ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
 
 	    
 	    std::cout << std::endl;
@@ -220,9 +229,9 @@ public:
 
 	    //printf("dft multiply finished \n");
 	    
-            // Get results
-            uint64_t variance = texture->variance();
-            uint64_t ssd = 0;
+        // Get results
+        uint64_t variance = texture->variance();
+        uint64_t ssd = 0;
 	    auto *possibility = static_cast<double*> (std::malloc(canvas->h * canvas->w * sizeof(double)));
             
 	   
