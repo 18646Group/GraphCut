@@ -113,8 +113,8 @@ int main() {
     p1 = fftw_plan_dft_2d(dft_h, dft_w, fftw_space1In, fftw_space1Out, FFTW_FORWARD, FFTW_ESTIMATE);
     p2 = fftw_plan_dft_2d(dft_h, dft_w, fftw_space2In, fftw_space2Out, FFTW_FORWARD, FFTW_ESTIMATE);
     
-    //p_inv = fftw_plan_dft_2d(dft_h, dft_w, fftw_resultIn, fftw_resultOut, FFTW_FORWARD, FFTW_ESTIMATE);
-    p_inv = fftw_plan_dft_2d(dft_h, dft_w, fftw_resultIn, fftw_resultOut, FFTW_BACKWARD, FFTW_ESTIMATE);
+    p_inv = fftw_plan_dft_2d(dft_h, dft_w, fftw_resultIn, fftw_resultOut, FFTW_FORWARD, FFTW_ESTIMATE);
+    //p_inv = fftw_plan_dft_2d(dft_h, dft_w, fftw_resultIn, fftw_resultOut, FFTW_BACKWARD, FFTW_ESTIMATE);
 
     // load values
     for(int i = 0, index = 0; i < image1 -> h; ++i){
