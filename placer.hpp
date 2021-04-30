@@ -104,41 +104,19 @@ public:
 			  *outputFFT_B = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
 			  *output_B = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
 
-
+        /*
 	    // load in pixel values
 	    DFT::dft_load(flipped, dft_w, dft_h, 
 			    flipped_RIn, flipped_GIn, flipped_BIn);
 
 	    DFT::dft_load(canvas, dft_w, dft_h, 
 			    canvas_RIn, canvas_GIn, canvas_BIn);
-
+        */
 
 	   // TODO: there are nan value when loading
-	    /*
-	    std::cout << std::endl;
-            std::cout << "flipped_RIn：" << std::endl;
-            for (int i = 0; i < 5; ++ i) {
-                for (int j = 0; j < 5; ++ j) {
-                    std::cout << "(" << flipped_RIn[i * dft_w + j][REAL] << ","
-                        << flipped_RIn[i * dft_w + j][IMAG] << ") ";
-                }
-                std::cout << std::endl;
-            }
-            std::cout << std::endl;
-
-	    std::cout << std::endl;
-            std::cout << "canvas_RIn：" << std::endl;
-            for (int i = 0; i < 5; ++ i) {
-                for (int j = 0; j < 5; ++ j) {
-                    std::cout << "(" << canvas_RIn[i * dft_w + j][REAL] << ","
-                        << canvas_RIn[i * dft_w + j][IMAG] << ") ";
-                }
-                std::cout << std::endl;
-            }
-            std::cout << std::endl;
-	    */
 
 	    // perform fft for each channel
+        /*
 	    DFT::dft(flipped_RIn, flipped_ROut, dft_w, dft_h);
 	    DFT::dft(flipped_GIn, flipped_GOut, dft_w, dft_h);
 	    DFT::dft(flipped_BIn, flipped_BOut, dft_w, dft_h);
@@ -146,22 +124,78 @@ public:
 	    DFT::dft(canvas_RIn, canvas_ROut, dft_w, dft_h);
 	    DFT::dft(canvas_GIn, canvas_GOut, dft_w, dft_h);
 	    DFT::dft(canvas_BIn, canvas_BOut, dft_w, dft_h);
+        */
+
+
+        fftw_plan pR, pB, pG;
+
+		pR = fftw_plan_dft_2d(dft_h, dft_w, flipped_RIn, flipped_ROut, FFTW_FORWARD, FFTW_ESTIMATE); // if use FFTW_MEASURE, need to initialze input after set the plan
+		pG = fftw_plan_dft_2d(dft_h, dft_w, flipped_GIn, flipped_GOut, FFTW_FORWARD, FFTW_ESTIMATE);
+        pB = fftw_plan_dft_2d(dft_h, dft_w, flipped_BIn, flipped_BOut, FFTW_FORWARD, FFTW_ESTIMATE);
+
+        DFT::dft_load(flipped, dft_w, dft_h, 
+			    flipped_RIn, flipped_GIn, flipped_BIn);
+
+        fftw_execute(pR);
+        fftw_execute(pG);
+        fftw_execute(pB);
+		
+        pR = fftw_plan_dft_2d(dft_h, dft_w, canvas_RIn, canvas_ROut, FFTW_FORWARD, FFTW_ESTIMATE);
+        pG = fftw_plan_dft_2d(dft_h, dft_w, canvas_GIn, canvas_GOut, FFTW_FORWARD, FFTW_ESTIMATE);
+        pB = fftw_plan_dft_2d(dft_h, dft_w, canvas_BIn, canvas_BOut, FFTW_FORWARD, FFTW_ESTIMATE);
+        
+        DFT::dft_load(canvas, dft_w, dft_h, 
+			    canvas_RIn, canvas_GIn, canvas_BIn);
+
+        fftw_execute(pR);
+        fftw_execute(pG);
+        fftw_execute(pB);
+
+        // clean up
+		fftw_destroy_plan(pR);
+        fftw_destroy_plan(pG);
+        fftw_destroy_plan(pB);
+		fftw_cleanup();
+
+
+        fftw_plan pR_inv, pG_inv, pB_inv;
+
+        pR_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_RIn, canvas_ROut, FFTW_BACKWARD, FFTW_ESTIMATE);
+        pG_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_GIn, canvas_GOut, FFTW_BACKWARD, FFTW_ESTIMATE);
+        pB_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_BIn, canvas_BOut, FFTW_BACKWARD, FFTW_ESTIMATE);
+
 
 	    // complex multiplication
 	    DFT::dft_multiply(dft_w, dft_h, flipped_ROut, canvas_ROut, outputFFT_R);
 	    DFT::dft_multiply(dft_w, dft_h, flipped_GOut, canvas_GOut, outputFFT_G);
 	    DFT::dft_multiply(dft_w, dft_h, flipped_BOut, canvas_BOut, outputFFT_B);
 
+
+        fftw_execute(pR_inv);
+        fftw_execute(pG_inv);
+        fftw_execute(pB_inv);
+
+        // clean up
+		fftw_destroy_plan(pR_inv);
+        fftw_destroy_plan(pG_inv);
+        fftw_destroy_plan(pB_inv);
+		fftw_cleanup();
+
+
+
 	    // ifft
-	    
+        /*
 	    DFT::idft(outputFFT_R, output_R, dft_w, dft_h);
 	    DFT::idft(outputFFT_G, output_G, dft_w, dft_h);
 	    DFT::idft(outputFFT_B, output_B, dft_w, dft_h);
+        */
 	    /*
     	    DFT::dft(outputFFT_R, output_R, dft_w, dft_h);
             DFT::dft(outputFFT_G, output_G, dft_w, dft_h);
             DFT::dft(outputFFT_B, output_B, dft_w, dft_h);	    
 	    */
+
+        
 
 
 	    // TODO: there are nan in output_R, output_G, and output_B
