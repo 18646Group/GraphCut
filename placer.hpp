@@ -127,6 +127,11 @@ public:
         */
 
 
+
+
+        // dft
+        // initiazte plan -> load data to memory -> execute plan -> clean up
+        // TODO: reuse planner
         fftw_plan pR, pB, pG;
 
 		pR = fftw_plan_dft_2d(dft_h, dft_w, flipped_RIn, flipped_ROut, FFTW_FORWARD, FFTW_ESTIMATE); // if use FFTW_MEASURE, need to initialze input after set the plan
@@ -157,28 +162,24 @@ public:
         fftw_destroy_plan(pB);
 		fftw_cleanup();
 
-
-        fftw_plan pR_inv, pG_inv, pB_inv;
-
-        pR_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_RIn, canvas_ROut, FFTW_BACKWARD, FFTW_ESTIMATE);
-        pG_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_GIn, canvas_GOut, FFTW_BACKWARD, FFTW_ESTIMATE);
-        pB_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_BIn, canvas_BOut, FFTW_BACKWARD, FFTW_ESTIMATE);
-
-
-	    // complex multiplication
+        // idft
+        // initiazte plan -> load data to memory -> execute plan -> clean up
+        fftw_plan p_inv;
+        p_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_RIn, canvas_ROut, FFTW_BACKWARD, FFTW_ESTIMATE);
 	    DFT::dft_multiply(dft_w, dft_h, flipped_ROut, canvas_ROut, outputFFT_R);
-	    DFT::dft_multiply(dft_w, dft_h, flipped_GOut, canvas_GOut, outputFFT_G);
+        fftw_execute(p_inv);
+
+        p_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_GIn, canvas_GOut, FFTW_BACKWARD, FFTW_ESTIMATE);
+            DFT::dft_multiply(dft_w, dft_h, flipped_GOut, canvas_GOut, outputFFT_G);
+        fftw_execute(p_inv);
+     
+        p_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_BIn, canvas_BOut, FFTW_BACKWARD, FFTW_ESTIMATE);
+	    // complex multiplication
 	    DFT::dft_multiply(dft_w, dft_h, flipped_BOut, canvas_BOut, outputFFT_B);
-
-
-        fftw_execute(pR_inv);
-        fftw_execute(pG_inv);
-        fftw_execute(pB_inv);
+        fftw_execute(p_inv);
 
         // clean up
-		fftw_destroy_plan(pR_inv);
-        fftw_destroy_plan(pG_inv);
-        fftw_destroy_plan(pB_inv);
+		fftw_destroy_plan(p_inv);
 		fftw_cleanup();
 
 
