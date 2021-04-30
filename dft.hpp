@@ -232,7 +232,7 @@ namespace DFT{
 		for(int i = 0; i < dft_h; ++i){
 			for(int j = 0; j < dft_w; ++j){
 				// i for row, j for col
-				/*				
+				/*							
 				outFFT[i * dft_w + j][REAL] = a[i * dft_w + j][REAL]*b[i * dft_w + j][REAL] 
 								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][IMAG];
 				outFFT[i * dft_w + j][IMAG] = a[i * dft_w + j][REAL]*b[i * dft_w + j][IMAG] 
@@ -240,7 +240,7 @@ namespace DFT{
 				*/
 
 
-				
+					
 				// compensate conjugate
 				outFFT[i * dft_w + j][REAL] = a[i * dft_w + j][REAL]*b[i * dft_w + j][REAL]
 								- a[i * dft_w + j][IMAG]*b[i * dft_w + j][IMAG];
