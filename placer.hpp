@@ -133,7 +133,8 @@ public:
         // dft
         // initiazte plan -> load data to memory -> execute plan -> clean up
         // TODO: reuse planner
-        fftw_plan pR, pB, pG;
+        fftw_cleanup();
+	fftw_plan pR, pB, pG;
 	// if use FFTW_MEASURE, need to initialze input after set the plan
 	pR = fftw_plan_dft_2d(dft_h, dft_w, flipped_RIn, flipped_ROut, FFTW_FORWARD, FFTW_ESTIMATE);
 	pG = fftw_plan_dft_2d(dft_h, dft_w, flipped_GIn, flipped_GOut, FFTW_FORWARD, FFTW_ESTIMATE);
@@ -157,53 +158,48 @@ public:
         fftw_execute(pG);
         fftw_execute(pB);
 
-        // clean up
-		fftw_destroy_plan(pR);
+	// clean up
+        fftw_destroy_plan(pR);
         fftw_destroy_plan(pG);
         fftw_destroy_plan(pB);
-		fftw_cleanup();
+	fftw_cleanup();
+
 
         // idft
         // initiazte plan -> load data to memory -> execute plan -> clean up
-	/*
-	fftw_plan p_inv;
-        p_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_RIn, canvas_ROut, FFTW_BACKWARD, FFTW_ESTIMATE);
+	fftw_plan pR_inv, pG_inv, pB_inv;
+        pR_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_R, output_R, FFTW_BACKWARD, FFTW_ESTIMATE);
+	pG_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_G, output_G, FFTW_BACKWARD, FFTW_ESTIMATE);
+	pB_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_B, output_B, FFTW_BACKWARD, FFTW_ESTIMATE);	
+	
 	DFT::dft_multiply(dft_w, dft_h, flipped_ROut, canvas_ROut, outputFFT_R);
-        fftw_execute(p_inv);
-
-        p_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_GIn, canvas_GOut, FFTW_BACKWARD, FFTW_ESTIMATE);
-        DFT::dft_multiply(dft_w, dft_h, flipped_GOut, canvas_GOut, outputFFT_G);
-        fftw_execute(p_inv);
-     
-        p_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_BIn, canvas_BOut, FFTW_BACKWARD, FFTW_ESTIMATE);
-	// complex multiplication
+        DFT::dft_multiply(dft_w, dft_h, flipped_GOut, canvas_GOut, outputFFT_G); 
 	DFT::dft_multiply(dft_w, dft_h, flipped_BOut, canvas_BOut, outputFFT_B);
-        fftw_execute(p_inv);
+	
+	fftw_execute(pR_inv);
+        fftw_execute(pG_inv);
+        fftw_execute(pB_inv);
 
-        // clean up
-	fftw_destroy_plan(p_inv);
+	fftw_destroy_plan(pR_inv);
+        fftw_destroy_plan(pG_inv);
+        fftw_destroy_plan(pB_inv);
 	fftw_cleanup();
-	*/
 
-		
+	/*	
 	fftw_plan p_inv;
-        p_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_RIn, canvas_ROut, FFTW_FORWARD, FFTW_ESTIMATE);
+        p_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_R, output_R, FFTW_FORWARD, FFTW_ESTIMATE);
         DFT::dft_multiply(dft_w, dft_h, flipped_ROut, canvas_ROut, outputFFT_R);
         fftw_execute(p_inv);
 
-        p_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_GIn, canvas_GOut, FFTW_FORWARD, FFTW_ESTIMATE);
+        p_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_G, output_G, FFTW_FORWARD, FFTW_ESTIMATE);
         DFT::dft_multiply(dft_w, dft_h, flipped_GOut, canvas_GOut, outputFFT_G);
         fftw_execute(p_inv);
      
-        p_inv = fftw_plan_dft_2d(dft_h, dft_w, canvas_BIn, canvas_BOut, FFTW_FORWARD, FFTW_ESTIMATE);
+        p_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_B, outputFFT_B, FFTW_FORWARD, FFTW_ESTIMATE);
         // complex multiplication
         DFT::dft_multiply(dft_w, dft_h, flipped_BOut, canvas_BOut, outputFFT_B);
         fftw_execute(p_inv);
-
-        // clean up
-        fftw_destroy_plan(p_inv);
-        fftw_cleanup();
-		
+	*/
 
 	    // ifft
         /*
@@ -223,20 +219,19 @@ public:
 	    // TODO: there are nan in output_R, output_G, and output_B
 
         std::cout << std::endl;
-            std::cout << "flipped_RIn：" << std::endl;
-            for (int i = 0; i < 5; ++ i) {
-                for (int j = 0; j < 5; ++ j) {
-                    std::cout << "(" << flipped_RIn[i * dft_w + j][REAL]<< ","
+        std::cout << "flipped_RIn：" << std::endl;
+        for (int i = 0; i < 5; ++ i) {
+	    for (int j = 0; j < 5; ++ j) {
+		std::cout << "(" << flipped_RIn[i * dft_w + j][REAL]<< ","
                         << flipped_RIn[i * dft_w + j][IMAG] << ") ";
-                }
-                std::cout << std::endl;
             }
             std::cout << std::endl;
+        }
+        std::cout << std::endl;
 
-
-	    if(std::isnan(flipped_ROut[0][REAL])){
-	    	printf("nan in flipped_ROut\n");
-	    }
+	if(std::isnan(flipped_ROut[0][REAL])){
+	    printf("nan in flipped_ROut\n");
+	}
 	    
 
 	    std::cout << std::endl;
@@ -346,7 +341,7 @@ public:
             std::free(possibility);
             std::free(texture_sum);
             std::free(canvas_sum);
-	  
+
 	    
 	    fftw_free(flipped_RIn); fftw_free(flipped_ROut);
 	    fftw_free(flipped_GIn); fftw_free(flipped_GOut);
@@ -363,13 +358,6 @@ public:
 	    //printf("free all resources");
         }
 	
-	/*
-	if((best_patch->x <= 0) || (best_patch->y <= 0) 
-		|| (best_patch->x_end() > canvas->w) || (best_patch->y_end() > canvas->h)){
-		printf("patch bigger than canvas!!! \n");
-	}
-	*/
-
 	canvas->apply(best_patch);
 	
 	//printf("entire matching finished \n");
