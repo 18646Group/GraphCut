@@ -11,11 +11,17 @@ set(CMAKE_CXX_FLAGS "-lfftw3")
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
 
+# executables
+add_executable(graph_cut_baseline main.cpp stb/stb_lib.cpp)
+add_executable(graph_cut_debug main.cpp stb/stb_lib.cpp)
 add_executable(graph_cut main.cpp stb/stb_lib.cpp)
 
-# this for debug
-add_executable(dft_test dft_test.cpp stb/stb_lib.cpp)
+# target definitions
+target_compile_definitions(graph_cut_baseline PUBLIC)
+target_compile_definitions(graph_cut_debug PUBLIC DEBUG USE_FFTW)
+target_compile_definitions(graph_cut PUBLIC USE_FFTW)
 
 # link libraries
+target_link_libraries(graph_cut_baseline fftw3)
+target_link_libraries(graph_cut_debug fftw3)
 target_link_libraries(graph_cut fftw3)
-target_link_libraries(dft_test fftw3)

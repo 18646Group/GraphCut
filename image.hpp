@@ -191,7 +191,9 @@ public:
     }
 
     void apply(const std::shared_ptr<Patch> &patch) {
-        std::cout << " > Applying a new patch at (" << patch->x << ", " << patch->y << ")" << std::endl;
+        #if DEBUG
+            std::cout << " > Applying a new patch at (" << patch->x << ", " << patch->y << ")" << std::endl;
+        #endif
         int x_begin = std::max(patch->x, 0);
         int y_begin = std::max(patch->y, 0);
         int x_end = std::min(patch->x_end(), w);
