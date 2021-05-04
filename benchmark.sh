@@ -1,3 +1,7 @@
 BINARY_PATH=$1
 
-time $BINARY_PATH images/originals/greenLeaf.jpg images/outputs/greenLeaf.png 256x256
+for file in brick.gif green.gif greenLeaf.jpg
+do
+    echo "processing file $file"
+    $BINARY_PATH images/originals/$file images/outputs/$file 512x512 | grep "Run time"
+done
