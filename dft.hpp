@@ -196,65 +196,148 @@ namespace DFT {
             memset(B, 0x00, size);
             for (int i = 0, index = 0; i < image->h; i++) {
                 for (int j = 0; j < image->w; j++, index++) {
+                    R[i * dft_w + j][REAL] = (double)(image->data[index].r);
+                    G[i * dft_w + j][REAL] = (double)(image->data[index].g);
+                    B[i * dft_w + j][REAL] = (double)(image->data[index].b);
+                }
+            }
+        }
 
-                    matR[i * dft_w + j][REAL] = (double)(image->data[index].r);
-                    matG[i * dft_w + j][REAL] = (double)(image->data[index].g);
-                    matB[i * dft_w + j][REAL] = (double)(image->data[index].b);
+        void loadProductOf(Domain &d1, Domain &d2) {
+            assert(dft_w == d1.dft_w && dft_w == d2.dft_w);
+            assert(dft_w == d1.dft_h && dft_w == d2.dft_w);
+            memset(R, 0x00, size);
+            memset(G, 0x00, size);
+            memset(B, 0x00, size);
 
-                    // just to make sure no garbage in memory
-                    matR[i * dft_w + j][IMAG] = 0.0;
-                    matG[i * dft_w + j][IMAG] = 0.0;
-                    matB[i * dft_w + j][IMAG] = 0.0;
+            // TODO: apply omp/simd here
+            for (int i = 0; i < dft_h; i++) {
+                for (int j = 0; j < dft_w; j++) {
+                    // R
+                    R[i * dft_w + j][REAL] =
+                        d1.R[i * dft_w + j][REAL] * d2.R[i * dft_w + j][REAL] -
+                        d1.R[i * dft_w + j][IMAG] * d2.R[i * dft_w + j][IMAG];
+                    R[i * dft_w + j][IMAG] =
+                        d1.R[i * dft_w + j][REAL] * d2.R[i * dft_w + j][IMAG] +
+                        d1.R[i * dft_w + j][IMAG] * d2.R[i * dft_w + j][REAL];
+                    // G
+                    G[i * dft_w + j][REAL] =
+                        d1.G[i * dft_w + j][REAL] * d2.G[i * dft_w + j][REAL] -
+                        d1.G[i * dft_w + j][IMAG] * d2.G[i * dft_w + j][IMAG];
+                    G[i * dft_w + j][IMAG] =
+                        d1.G[i * dft_w + j][REAL] * d2.G[i * dft_w + j][IMAG] +
+                        d1.G[i * dft_w + j][IMAG] * d2.G[i * dft_w + j][REAL];
+                    // B
+                    B[i * dft_w + j][REAL] =
+                        d1.B[i * dft_w + j][REAL] * d2.B[i * dft_w + j][REAL] -
+                        d1.B[i * dft_w + j][IMAG] * d2.B[i * dft_w + j][IMAG];
+                    B[i * dft_w + j][IMAG] =
+                        d1.B[i * dft_w + j][REAL] * d2.B[i * dft_w + j][IMAG] +
+                        d1.B[i * dft_w + j][IMAG] * d2.B[i * dft_w + j][REAL];
                 }
             }
         }
 
         inline double realsum(int i, int j) {
-            return R[i * dft_w + j][REAL] + G[i * dft_w + j][REAL] + B[i * dft_w + j][REAL];
+            return (
+                R[i * dft_w + j][REAL] + 
+                G[i * dft_w + j][REAL] + 
+                B[i * dft_w + j][REAL]
+            ) / (
+                dft_h * dft_w
+            );
         }
-    }
+    };
 
-    // load in pixel
-    void
-        dft_load(const std::shared_ptr<Image>& image, int dft_w, int dft_h,
-            fftw_complex* matR, fftw_complex* matG, fftw_complex* matB) {
-        // matR/matG/matB has been initialized to zero before function
-        // matR/matG/matB: (dft_w * dft_h) * 2, row major
+    static int planner_cnt = 0;
 
-        for (int i = 0, index = 0; i < image->h; ++i) {
-            for (int j = 0; j < image->w; ++j, ++index) {
+    class Planner {
+        private:
+        int dft_w;
+        int dft_h;
+        fftw_plan flippedPlanR;
+        fftw_plan flippedPlanG;
+        fftw_plan flippedPlanB;
+        fftw_plan canvasPlanR;
+        fftw_plan canvasPlanG;
+        fftw_plan canvasPlanB;
+        fftw_plan outputPlanR;
+        fftw_plan outputPlanG;
+        fftw_plan outputPlanB;
 
-                matR[i * dft_w + j][REAL] = (double)(image->data[index].r);
-                matG[i * dft_w + j][REAL] = (double)(image->data[index].g);
-                matB[i * dft_w + j][REAL] = (double)(image->data[index].b);
+        public:
+        Domain *flipped;
+        Domain *flippedFFT;
+        Domain *canvas;
+        Domain *canvasFFT;
+        Domain *output;
+        Domain *outputFFT;
 
-                if (std::isnan((double)(image->data[index].r))) {
-                    printf("NAN in data!!!! \n");
-                }
+        Planner(int dft_w, int dft_h) : dft_w(dft_w), dft_h(dft_h) {
+            // initialize domains
+            flipped = new Domain(dft_w, dft_h);
+            flippedFFT = new Domain(dft_w, dft_h);
+            canvas = new Domain(dft_w, dft_h);
+            canvasFFT = new Domain(dft_w, dft_h);
+            output = new Domain(dft_w, dft_h);
+            outputFFT = new Domain(dft_w, dft_h);
+            // initialize plans
+            flippedPlanR = fftw_plan_dft_2d(dft_h, dft_w, flipped->R, flippedFFT->R, FFTW_FORWARD, FFTW_ESTIMATE);
+            flippedPlanG = fftw_plan_dft_2d(dft_h, dft_w, flipped->R, flippedFFT->R, FFTW_FORWARD, FFTW_ESTIMATE);
+            flippedPlanB = fftw_plan_dft_2d(dft_h, dft_w, flipped->R, flippedFFT->R, FFTW_FORWARD, FFTW_ESTIMATE);
+            canvasPlanR = fftw_plan_dft_2d(dft_h, dft_w, canvas->R, canvasFFT->R, FFTW_FORWARD, FFTW_ESTIMATE);
+            canvasPlanG = fftw_plan_dft_2d(dft_h, dft_w, canvas->R, canvasFFT->R, FFTW_FORWARD, FFTW_ESTIMATE);
+            canvasPlanB = fftw_plan_dft_2d(dft_h, dft_w, canvas->R, canvasFFT->R, FFTW_FORWARD, FFTW_ESTIMATE);
+            outputPlanR = fftw_plan_dft_2d(dft_h, dft_w, outputFFT->R, output->R, FFTW_BACKWARD, FFTW_ESTIMATE);
+            outputPlanG = fftw_plan_dft_2d(dft_h, dft_w, outputFFT->R, output->R, FFTW_BACKWARD, FFTW_ESTIMATE);
+            outputPlanB = fftw_plan_dft_2d(dft_h, dft_w, outputFFT->R, output->R, FFTW_BACKWARD, FFTW_ESTIMATE);
+            // add planner cnt
+            planner_cnt ++;
+        }
 
-                // just to make sure no garbage in memory
-                matR[i * dft_w + j][IMAG] = 0.0;
-                matG[i * dft_w + j][IMAG] = 0.0;
-                matB[i * dft_w + j][IMAG] = 0.0;
+        ~Planner() {
+            delete flipped;
+            delete flippedFFT;
+            delete canvas;
+            delete canvasFFT;
+            delete output;
+            delete outputFFT;
+
+            fftw_destroy_plan(flippedPlanR);
+            fftw_destroy_plan(flippedPlanG);
+            fftw_destroy_plan(flippedPlanB);
+
+            fftw_destroy_plan(canvasPlanR);
+            fftw_destroy_plan(canvasPlanG);
+            fftw_destroy_plan(canvasPlanB);
+
+            fftw_destroy_plan(outputPlanR);
+            fftw_destroy_plan(outputPlanG);
+            fftw_destroy_plan(outputPlanB);
+
+            planner_cnt --;
+            if (!planner_cnt) {
+                fftw_cleanup();
             }
         }
-    }
 
-    void dft_multiply(const int dft_w, const int dft_h,
-        fftw_complex* a, fftw_complex* b, fftw_complex* outFFT) {
-        // multiply complex dft result
-        // TODO: apply omp here
-        for (int i = 0; i < dft_h; ++i) {
-            for (int j = 0; j < dft_w; ++j) {
-                // compensate conjugate
-                outFFT[i * dft_w + j][REAL] =
-                    a[i * dft_w + j][REAL] * b[i * dft_w + j][REAL] -
-                    a[i * dft_w + j][IMAG] * b[i * dft_w + j][IMAG];
-                outFFT[i * dft_w + j][IMAG] =
-                    a[i * dft_w + j][REAL] * b[i * dft_w + j][IMAG] +
-                    a[i * dft_w + j][IMAG] * b[i * dft_w + j][REAL];
-            }
+        void main(const std::shared_ptr<Image>& img_flipped, const std::shared_ptr<Image>& img_canvas) {
+            flipped->load(img_flipped);
+            canvas->load(img_canvas);
+            // TODO: OpenMP
+            fftw_execute(flippedPlanR);
+            fftw_execute(flippedPlanG);
+            fftw_execute(flippedPlanB);
+            fftw_execute(canvasPlanR);
+            fftw_execute(canvasPlanG);
+            fftw_execute(canvasPlanB);
+            outputFFT->loadProductOf(*flippedFFT, *canvasFFT);
+            // TODO: OpenMP
+            fftw_execute(outputPlanR);
+            fftw_execute(outputPlanG);
+            fftw_execute(outputPlanB);
         }
-    }
+    };
 
+    static Planner* planner = NULL;
 } // end namespace FFT

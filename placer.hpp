@@ -84,89 +84,10 @@ public:
             int dft_h = dft_round(texture->h + canvas->h);
 
 #if USE_FFTW
-            // FFT using new FFTW
-            fftw_complex* flipped_RIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * flipped_ROut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * flipped_GIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * flipped_GOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * flipped_BIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * flipped_BOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
-
-            fftw_complex* canvas_RIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * canvas_ROut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * canvas_GIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * canvas_GOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * canvas_BIn = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * canvas_BOut = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
-
-            fftw_complex* outputFFT_R = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * output_R = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * outputFFT_G = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * output_G = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * outputFFT_B = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex)),
-                * output_B = (fftw_complex*)fftw_malloc(dft_h * dft_w * sizeof(fftw_complex));
-
-            // dft
-            // initiazte plan -> load data to memory -> execute plan -> clean up
-            // TODO: reuse planner
-            fftw_cleanup();
-            fftw_plan p_flippedR, p_flippedB, p_flippedG, p_canvasR, p_canvasG, p_canvasB;
-            fftw_plan pR_inv, pG_inv, pB_inv;
-
-            // if use FFTW_MEASURE, need to initialze input after set the plan
-            p_flippedR = fftw_plan_dft_2d(dft_h, dft_w, flipped_RIn, flipped_ROut, FFTW_FORWARD, FFTW_ESTIMATE);
-            p_flippedG = fftw_plan_dft_2d(dft_h, dft_w, flipped_GIn, flipped_GOut, FFTW_FORWARD, FFTW_ESTIMATE);
-            p_flippedB = fftw_plan_dft_2d(dft_h, dft_w, flipped_BIn, flipped_BOut, FFTW_FORWARD, FFTW_ESTIMATE);
-
-            p_canvasR = fftw_plan_dft_2d(dft_h, dft_w, canvas_RIn, canvas_ROut, FFTW_FORWARD, FFTW_ESTIMATE);
-            p_canvasG = fftw_plan_dft_2d(dft_h, dft_w, canvas_GIn, canvas_GOut, FFTW_FORWARD, FFTW_ESTIMATE);
-            p_canvasB = fftw_plan_dft_2d(dft_h, dft_w, canvas_BIn, canvas_BOut, FFTW_FORWARD, FFTW_ESTIMATE);
-
-            pR_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_R, output_R, FFTW_BACKWARD, FFTW_ESTIMATE);
-            pG_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_G, output_G, FFTW_BACKWARD, FFTW_ESTIMATE);
-            pB_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_B, output_B, FFTW_BACKWARD, FFTW_ESTIMATE);
-
-            pR_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_R, output_R, FFTW_FORWARD, FFTW_ESTIMATE);
-            pG_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_G, output_G, FFTW_FORWARD, FFTW_ESTIMATE);
-            pB_inv = fftw_plan_dft_2d(dft_h, dft_w, outputFFT_B, output_B, FFTW_FORWARD, FFTW_ESTIMATE);
-
-
-            DFT::dft_load(flipped, dft_w, dft_h, flipped_RIn, flipped_GIn, flipped_BIn);
-
-            DFT::dft_load(canvas, dft_w, dft_h, canvas_RIn, canvas_GIn, canvas_BIn);
-
-            fftw_execute(p_flippedR);
-            fftw_execute(p_flippedG);
-            fftw_execute(p_flippedB);
-
-            fftw_execute(p_canvasR);
-            fftw_execute(p_canvasG);
-            fftw_execute(p_canvasB);
-
-            DFT::dft_multiply(dft_w, dft_h, flipped_ROut, canvas_ROut, outputFFT_R);
-            DFT::dft_multiply(dft_w, dft_h, flipped_GOut, canvas_GOut, outputFFT_G);
-            DFT::dft_multiply(dft_w, dft_h, flipped_BOut, canvas_BOut, outputFFT_B);
-
-            // initiazte plan -> load data to memory -> execute plan -> clean up
-            fftw_execute(pR_inv);
-            fftw_execute(pG_inv);
-            fftw_execute(pB_inv);
-            std::cout << "rin: " << flipped_RIn[0][REAL] << std::endl;
-            std::cout << "rout: " << flipped_ROut[0][REAL] << std::endl;
-
-            // clean up
-            fftw_destroy_plan(p_flippedR);
-            fftw_destroy_plan(p_flippedG);
-            fftw_destroy_plan(p_flippedB);
-
-            fftw_destroy_plan(p_canvasR);
-            fftw_destroy_plan(p_canvasG);
-            fftw_destroy_plan(p_canvasB);
-
-            fftw_destroy_plan(pR_inv);
-            fftw_destroy_plan(pG_inv);
-            fftw_destroy_plan(pB_inv);
-            fftw_cleanup();
+            if (!DFT::planner) {
+                DFT::planner = new DFT::Planner(dft_w, dft_h);
+            }
+            DFT::planner->main(flipped, canvas);
 #else
             // FFT using original code
             ComplexPixel* dft_space1, * dft_space2;
@@ -183,7 +104,6 @@ public:
             uint64_t ssd = 0;
             auto* possibility = static_cast<double*>(std::malloc(canvas->h * canvas->w * sizeof(double)));
 
-            double normalize = 1.0 / (dft_w * dft_h);
             for (int y = 0, index = 0; y < canvas->h; ++y) {
                 for (int x = 0; x < canvas->w; ++x, ++index) {
                     int overlapped_w = std::min(texture->w, canvas->w - x);
@@ -195,12 +115,7 @@ public:
 
                     // dft output used here
 #if USE_FFTW
-                    // TODO: move normalize to ifft
-                    ssd -= std::floor(2.0 * normalize * (
-                        output_R[(texture->h + y - 1) * dft_w + texture->w + x - 1][REAL] +
-                        output_G[(texture->h + y - 1) * dft_w + texture->w + x - 1][REAL] +
-                        output_B[(texture->h + y - 1) * dft_w + texture->w + x - 1][REAL]
-                        ));
+                    ssd -= std::floor(2.0 * DFT::planner->output->realsum(texture->h + y - 1, texture->w + x - 1));
 #else
                     ssd -= std::floor(2.0 * dft_space1[(texture->h + y - 1) * dft_w + texture->w + x - 1].real_sum());
 #endif
@@ -226,33 +141,6 @@ public:
                 }
             }
             assert(best_patch);
-
-#if USE_FFTW
-            std::free(possibility);
-            std::free(texture_sum);
-            std::free(canvas_sum);
-
-            fftw_free(flipped_RIn);
-            fftw_free(flipped_ROut);
-            fftw_free(flipped_GIn);
-            fftw_free(flipped_GOut);
-            fftw_free(flipped_BIn);
-            fftw_free(flipped_BOut);
-
-            fftw_free(canvas_RIn);
-            fftw_free(canvas_ROut);
-            fftw_free(canvas_GIn);
-            fftw_free(canvas_GOut);
-            fftw_free(canvas_BIn);
-            fftw_free(canvas_BOut);
-
-            fftw_free(outputFFT_R);
-            fftw_free(output_R);
-            fftw_free(outputFFT_G);
-            fftw_free(output_G);
-            fftw_free(outputFFT_B);
-            fftw_free(output_B);
-#endif
         }
 
         canvas->apply(best_patch);
