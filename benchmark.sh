@@ -1,7 +1,10 @@
+#Usage: bash benchmark.sh ./graph_cut_omp 256x256
+
 BINARY_PATH=$1
+OUTPUT_SIZE=$2
 
 for file in brick.gif green.gif greenLeaf.jpg
 do
-    echo "processing file $file"
-    $BINARY_PATH images/originals/$file images/outputs/$file 512x512 | grep "Run time"
+    echo "processing file $file into $OUTPUT_SIZE"
+    $BINARY_PATH images/originals/$file images/outputs/$file $OUTPUT_SIZE | grep "Run time"
 done

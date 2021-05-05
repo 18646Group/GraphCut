@@ -106,7 +106,9 @@ public:
 
             // TODO: add omp, rewrite index as local vairable
             int x, y;
-            # pragma omp parallel for private(x, y) 
+            #if USE_OMP
+            #pragma omp parallel for private(x, y) 
+            #endif
             for (y = 0; y < canvas->h; ++y) {
                 for (x = 0; x < canvas->w; ++x) {
                     int index = y*canvas->w + x;

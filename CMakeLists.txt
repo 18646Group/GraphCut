@@ -24,7 +24,7 @@ target_compile_definitions(graph_cut_omp PUBLIC USE_FFTW USE_OMP)
 target_compile_definitions(graph_cut_debug PUBLIC DEBUG USE_FFTW USE_OMP)
 
 # link libraries
-target_link_libraries(graph_cut_baseline fftw3)
-target_link_libraries(graph_cut_fftw fftw3)
-target_link_libraries(graph_cut_omp fftw3)
-target_link_libraries(graph_cut_debug fftw3)
+target_link_libraries(graph_cut_baseline fftw3 fftw3_omp)
+target_link_libraries(graph_cut_fftw fftw3 fftw3_omp)
+target_link_libraries(graph_cut_omp fftw3 fftw3_omp)
+target_link_libraries(graph_cut_debug fftw3 fftw3_omp)
