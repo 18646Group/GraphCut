@@ -340,7 +340,7 @@ namespace DFT {
             planner_cnt --;
             if (!planner_cnt) {
                 #if USE_OMP
-                fftw_cleanup_thread();
+                fftw_cleanup_threads();
                 #else
                 fftw_cleanup();
                 #endif

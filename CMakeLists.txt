@@ -5,7 +5,7 @@ set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 17)
 
 # library flag
-set(CMAKE_CXX_FLAGS "-lfftw3 -fopenmp -lfftw3_omp -lm")
+set(CMAKE_CXX_FLAGS "-fopenmp -lfftw3_omp -lfftw3 -lm")
 
 # include directories
 include_directories(/usr/local/include)

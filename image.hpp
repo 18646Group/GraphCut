@@ -207,9 +207,9 @@ public:
         std::vector<int> overlapped_index(w * h, -1);
 
         // TODO: add omp
-        int x, y, a, b, d;
-        int index, neighbor_index;
-        #pragma omp parallel for private(x, y, index, a, b, d, neighbor_index)
+        int x, y, a, b;
+        int index;
+        #pragma omp parallel for private(x, y, index, a, b)
         for (y = y_begin; y < y_end; ++ y) {
             for (x = x_begin; x < x_end; ++ x) {
                 index = y * w + x;
@@ -221,10 +221,10 @@ public:
                     overlapped_index[index] = overlapped.size();
                     overlapped.emplace_back(x, y);
                     #pragma unroll
-                    for (d = 0; d < 2; ++ d) {
+                    for (int d = 0; d < 2; ++ d) {
                         a = x + dx[d];
                         b = y + dy[d];
-                        neighbor_index = b * w + a;
+                        int neighbor_index = b * w + a;
                         if (in_range(a, b) and origin[neighbor_index] and origin[neighbor_index] != origin[index]) {
                             ++ n_old_seam_nodes;
                         }
