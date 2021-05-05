@@ -205,9 +205,14 @@ public:
         int n_old_seam_nodes = 0;
         std::vector<std::pair<int, int>> overlapped;
         std::vector<int> overlapped_index(w * h, -1);
-        for (int y = y_begin; y < y_end; ++ y) {
-            for (int x = x_begin; x < x_end; ++ x) {
-                int index = y * w + x;
+
+        // TODO: add omp
+        int x, y, a, b, d;
+        int index, neighbor_index;
+        #pragma omp parallel for private(x, y, index, a, b, d, neighbor_index)
+        for (y = y_begin; y < y_end; ++ y) {
+            for (x = x_begin; x < x_end; ++ x) {
+                index = y * w + x;
                 if (not origin[index]) {
                     origin[index] = patch;
                     data[index] = patch->pixel(x, y);
@@ -215,9 +220,11 @@ public:
                     assert(origin[index] != patch);
                     overlapped_index[index] = overlapped.size();
                     overlapped.emplace_back(x, y);
-                    for (int d = 0; d < 2; ++ d) {
-                        int a = x + dx[d], b = y + dy[d];
-                        int neighbor_index = b * w + a;
+                    #pragma unroll
+                    for (d = 0; d < 2; ++ d) {
+                        a = x + dx[d];
+                        b = y + dy[d];
+                        neighbor_index = b * w + a;
                         if (in_range(a, b) and origin[neighbor_index] and origin[neighbor_index] != origin[index]) {
                             ++ n_old_seam_nodes;
                         }
@@ -230,6 +237,7 @@ public:
         Graph graph(overlapped.size() + n_old_seam_nodes + 2);
         int s = overlapped.size() + n_old_seam_nodes, t = overlapped.size() + n_old_seam_nodes + 1;
         int old_sean_node_index = overlapped.size();
+        // TODO: add omp
         for (int i = 0; i < overlapped.size(); ++ i) {
             auto [x, y] = overlapped[i];
             int index = y * w + x;

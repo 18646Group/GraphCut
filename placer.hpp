@@ -104,8 +104,12 @@ public:
             uint64_t ssd = 0;
             auto* possibility = static_cast<double*>(std::malloc(canvas->h * canvas->w * sizeof(double)));
 
-            for (int y = 0, index = 0; y < canvas->h; ++y) {
-                for (int x = 0; x < canvas->w; ++x, ++index) {
+            // TODO: add omp, rewrite index as local vairable
+            int x, y;
+            # pragma omp parallel for private(x, y) 
+            for (y = 0; y < canvas->h; ++y) {
+                for (x = 0; x < canvas->w; ++x) {
+                    int index = y*canvas->w + x;
                     int overlapped_w = std::min(texture->w, canvas->w - x);
                     int overlapped_h = std::min(texture->h, canvas->h - y);
 

@@ -4,6 +4,7 @@
 #include <fftw3.h>
 #include <cstdlib> // for debug
 #include <cmath>
+#include <omp.h>
 
 // macros for complex number
 #define REAL 0
@@ -194,6 +195,18 @@ namespace DFT {
             memset(R, 0x00, size);
             memset(G, 0x00, size);
             memset(B, 0x00, size);
+            #if USE_OMP
+            int i, j;
+            #pragma omp parallel for collapse(2) private(i,j)
+            for (i = 0; i < image->h; i++) {
+                for (j = 0; j < image->w; j++) {
+                    int index = i * image->w + j;
+                    R[i * dft_w + j][REAL] = (double)(image->data[index].r);
+                    G[i * dft_w + j][REAL] = (double)(image->data[index].g);
+                    B[i * dft_w + j][REAL] = (double)(image->data[index].b);
+                }
+            }
+            #else
             for (int i = 0, index = 0; i < image->h; i++) {
                 for (int j = 0; j < image->w; j++, index++) {
                     R[i * dft_w + j][REAL] = (double)(image->data[index].r);
@@ -201,6 +214,7 @@ namespace DFT {
                     B[i * dft_w + j][REAL] = (double)(image->data[index].b);
                 }
             }
+            #endif
         }
 
         void loadProductOf(Domain &d1, Domain &d2) {
@@ -210,7 +224,9 @@ namespace DFT {
             memset(G, 0x00, size);
             memset(B, 0x00, size);
 
-            // TODO: apply omp/simd here
+            #if USE_OMP
+            #pragma omp parallel for collapse(2)
+            #endif
             for (int i = 0; i < dft_h; i++) {
                 for (int j = 0; j < dft_w; j++) {
                     // R
@@ -282,6 +298,12 @@ namespace DFT {
             output = new Domain(dft_w, dft_h);
             outputFFT = new Domain(dft_w, dft_h);
             // initialize plans
+            #if USE_OMP
+            if (planner_cnt == 0) {
+                fftw_init_threads();
+            }
+            fftw_plan_with_nthreads(omp_get_max_threads());
+            #endif
             flippedPlanR = fftw_plan_dft_2d(dft_h, dft_w, flipped->R, flippedFFT->R, FFTW_FORWARD, FFTW_ESTIMATE);
             flippedPlanG = fftw_plan_dft_2d(dft_h, dft_w, flipped->R, flippedFFT->R, FFTW_FORWARD, FFTW_ESTIMATE);
             flippedPlanB = fftw_plan_dft_2d(dft_h, dft_w, flipped->R, flippedFFT->R, FFTW_FORWARD, FFTW_ESTIMATE);
@@ -317,22 +339,27 @@ namespace DFT {
 
             planner_cnt --;
             if (!planner_cnt) {
+                #if USE_OMP
+                fftw_cleanup_thread();
+                #else
                 fftw_cleanup();
+                #endif
             }
         }
 
         void main(const std::shared_ptr<Image>& img_flipped, const std::shared_ptr<Image>& img_canvas) {
             flipped->load(img_flipped);
             canvas->load(img_canvas);
-            // TODO: OpenMP
+            
             fftw_execute(flippedPlanR);
             fftw_execute(flippedPlanG);
             fftw_execute(flippedPlanB);
             fftw_execute(canvasPlanR);
             fftw_execute(canvasPlanG);
             fftw_execute(canvasPlanB);
+            
             outputFFT->loadProductOf(*flippedFFT, *canvasFFT);
-            // TODO: OpenMP
+
             fftw_execute(outputPlanR);
             fftw_execute(outputPlanG);
             fftw_execute(outputPlanB);
