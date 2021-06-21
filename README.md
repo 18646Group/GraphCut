@@ -1,6 +1,9 @@
 # GraphCut
 A C++ implement of the paper "Graphcut Textures: Image and Video Synthesis Using Graph Cuts"
 
+Original author: LyricZha
+Modified and accelerated by: Minxiao An, Wenxuan Ou, and Xiaoyan Wu
+
 ## Compile
 ```bash
 mkdir build
